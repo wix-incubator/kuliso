@@ -1,0 +1,41 @@
+{
+  "name": "kuliso",
+  "version": "0.0.1",
+  "description": "Tiny library for performant pointer-driven or gyroscope-driven effects",
+  "main": "dist/index.cjs",
+  "module": "index.js",
+  "types": "types.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "rollup -c",
+    "test": "c8 ava test/*.spec.js -s",
+    "test:debug": "ava test/*.spec.js -s",
+    "docs": "documentation build src/Kuliso.js -f html -o docs/reference -c documentation.yml",
+    "rtfm": "npm run docs && http-server ./docs/reference"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wix-incubator/kuliso.git"
+  },
+  "keywords": [
+    "animation",
+    "js",
+    "pointer",
+    "gyroscope"
+  ],
+  "author": "wow!Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wix-incubator/kuliso/issues"
+  },
+  "homepage": "https://github.com/wix-incubator/kuliso#readme",
+  "devDependencies": {
+    "ava": "^5.3.1",
+    "c8": "^8.0.1",
+    "documentation": "^14.0.2",
+    "http-server": "^14.1.1",
+    "rollup": "^4.6.0",
+    "rollup-plugin-filesize": "^10.0.0",
+    "rollup-plugin-progress": "^1.1.2"
+  }
+}
