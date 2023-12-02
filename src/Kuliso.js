@@ -1,5 +1,6 @@
 import { getController } from './controller.js';
 import { defaultTo, frameThrottle, lerp } from './utilities.js';
+import { getHandler } from './hover';
 
 /**
  * @private
@@ -29,28 +30,34 @@ export class Kuliso {
     this.config = defaultTo(config, DEFAULTS);
 
     this.progress = {
-      p: 0,
-      prevP: 0,
-      vp: 0
+      x:0, 
+      y:0,
+      prevX:0, 
+      prevY:0,
+      vx: 0,
+      vy: 0
+
     };
     this.currentProgress = {
-      p: 0,
-      prevP: 0,
-      vp: 0
+      x:0, 
+      y:0,
+      prevX:0, 
+      prevY:0,
+      vx: 0,
+      vy: 0
     };
 
     this._lerpFrameId = 0;
     this.effect = null;
+    this.mouseHandler = null;
     // if no root or root is document.body then use window
     this.config.root = (!this.config.root || this.config.root === window.document.body) ? window : this.config.root;
     this.config.resetProgress = this.config.resetProgress || this.resetProgress.bind(this);
 
     this._measure = this.config.measure || (() => {
       const root = this.config.root;
-      // get current scroll position from window or element
-      this.progress.p = this.config.horizontal
-        ? root.scrollX || root.scrollLeft || 0
-        : root.scrollY || root.scrollTop || 0;
+      // get current mouse position from window or element
+      // not sure what to do here...
     });
 
     this._trigger = frameThrottle(() => {
@@ -109,6 +116,7 @@ export class Kuliso {
     const hasLerp = this.config.transitionActive;
 
     // if transition is active interpolate to next point
+    // QUESTION: How to handle lerp?
     if (hasLerp) {
       this.lerp();
     }
@@ -117,9 +125,14 @@ export class Kuliso {
     const progress = hasLerp ? this.currentProgress : this.progress;
 
     if (this.config.velocityActive) {
-      const dp = progress.p - progress.prevP;
-      const factorP = dp < 0 ? -1 : 1;
-      progress.vp = Math.min(this.config.velocityMax, Math.abs(dp)) / this.config.velocityMax * factorP;
+      const dx = progress.x - progress.prevX;
+      const dy = progress.y - progress.prevY;
+
+      const factorPx = dx < 0 ? -1 : 1;
+      const factorPy = dy < 0 ? -1 : 1;
+
+      progress.vx = Math.min(this.config.velocityMax, Math.abs(dx)) / this.config.velocityMax * factorPx;
+      progress.vy = Math.min(this.config.velocityMax, Math.abs(dy)) / this.config.velocityMax * factorPy;
     }
 
     // update effect
@@ -133,13 +146,15 @@ export class Kuliso {
       this._lerpFrameId = window.requestAnimationFrame(() => this.tick());
     }
 
-    progress.prevP = progress.p;
+    progress.prevX = progress.x;
+    progress.prevY = progress.y;
   }
 
   /**
    * Calculate current progress.
    */
   lerp () {
+    // TODO??
     this.currentProgress.p = lerp(this.currentProgress.p, this.progress.p, +(1 - this.config.transitionFriction).toFixed(3), this.config.transitionEpsilon);
   }
 
@@ -155,15 +170,42 @@ export class Kuliso {
    * Register to pointermove for triggering update.
    */
   setupEvent () {
+    // this.config.root.removeEventListener('pointermove', this._trigger);
     this.removeEvent();
-    this.config.root.addEventListener('pointermove', this._trigger);
+
+    const tick = () => this.tick()
+    // attempt usage of DeviceOrientation event
+    const gyroscopeHandler = getGyroscope({
+        progress: this.progress,
+        samples: this.config.gyroscopeSamples,
+        maxBeta: this.config.maxBeta,
+        maxGamma: this.config.maxGamma
+    });
+
+    if (gyroscopeHandler) {
+        this.usingGyroscope = true;
+        this.tiltHandler = gyroscopeHandler;
+    }
+    else {
+        /*
+         * No deviceorientation support
+         * Use mouseover event.
+         */
+        this.mouseHandler = getHandler({
+            target: this.config.mouseTarget,
+            progress: this.progress,
+            callback: () => requestAnimationFrame(tick)
+        });
+    }
+
+    this.mouseHandler.on();
   }
 
   /**
    * Remove pointermove handler.
    */
   removeEvent () {
-    this.config.root.removeEventListener('pointermove', this._trigger);
+    this.mouseHandler?.off();
   }
 
   /**

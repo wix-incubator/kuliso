@@ -34,11 +34,11 @@ export function getHandler ({target, progress, callback}) {
   }
 
   function on (config) {
-    target.addEventListener('mousemove', handler, config || false);
+    target.addEventListener('pointermove', handler, config || false);
   }
 
   function off (config) {
-    target.removeEventListener('mousemove', handler, config || false);
+    target.removeEventListener('pointermove', handler, config || false);
   }
 
   return {
