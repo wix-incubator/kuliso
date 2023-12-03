@@ -1,5 +1,5 @@
 import { getController } from './controller.js';
-import { defaultTo, frameThrottle, lerp } from './utilities.js';
+import { defaultTo, frameThrottle } from './utilities.js';
 import { getHandler } from './hover';
 
 /**
@@ -47,7 +47,7 @@ export class Kuliso {
       vy: 0
     };
 
-    this._lerpFrameId = 0;
+    // this._lerpFrameId = 0;
     this.effect = null;
     this.mouseHandler = null;
     // if no root or root is document.body then use window
@@ -113,50 +113,49 @@ export class Kuliso {
    * @param {boolean} [clearLerpFrame] whether to cancel an existing lerp frame
    */
   tick (clearLerpFrame) {
-    const hasLerp = this.config.transitionActive;
+    // const hasLerp = this.config.transitionActive;
 
     // if transition is active interpolate to next point
     // QUESTION: How to handle lerp?
-    if (hasLerp) {
-      this.lerp();
-    }
+    // if (hasLerp) {
+    //   this.lerp();
+    // }
 
     // choose the object we iterate on
-    const progress = hasLerp ? this.currentProgress : this.progress;
+    // const progress = hasLerp ? this.currentProgress : this.progress;
 
     if (this.config.velocityActive) {
-      const dx = progress.x - progress.prevX;
-      const dy = progress.y - progress.prevY;
+      const dx = this.progress.x - this.progress.prevX;
+      const dy = this.progress.y - this.progress.prevY;
 
       const factorPx = dx < 0 ? -1 : 1;
       const factorPy = dy < 0 ? -1 : 1;
 
-      progress.vx = Math.min(this.config.velocityMax, Math.abs(dx)) / this.config.velocityMax * factorPx;
-      progress.vy = Math.min(this.config.velocityMax, Math.abs(dy)) / this.config.velocityMax * factorPy;
+      this.progress.vx = Math.min(this.config.velocityMax, Math.abs(dx)) / this.config.velocityMax * factorPx;
+      this.progress.vy = Math.min(this.config.velocityMax, Math.abs(dy)) / this.config.velocityMax * factorPy;
     }
 
     // update effect
-    this.effect.tick(progress);
+    this.effect.tick(this.progress);
 
-    if (hasLerp && (progress.p !== this.progress.p)) {
-      if (clearLerpFrame && this._lerpFrameId) {
-        window.cancelAnimationFrame(this._lerpFrameId);
-      }
+    // if (hasLerp && (progress.p !== this.progress.p)) {
+    //   if (clearLerpFrame && this._lerpFrameId) {
+    //     window.cancelAnimationFrame(this._lerpFrameId);
+    //   }
 
-      this._lerpFrameId = window.requestAnimationFrame(() => this.tick());
-    }
+    //   this._lerpFrameId = window.requestAnimationFrame(() => this.tick());
+    // }
 
-    progress.prevX = progress.x;
-    progress.prevY = progress.y;
+    this.progress.prevX = this.progress.x;
+    this.progress.prevY = this.progress.y;
   }
 
   /**
    * Calculate current progress.
    */
-  lerp () {
-    // TODO??
-    this.currentProgress.p = lerp(this.currentProgress.p, this.progress.p, +(1 - this.config.transitionFriction).toFixed(3), this.config.transitionEpsilon);
-  }
+  // lerp () {
+  //   this.currentProgress.p = lerp(this.currentProgress.p, this.progress.p, +(1 - this.config.transitionFriction).toFixed(3), this.config.transitionEpsilon);
+  // }
 
   /**
    * Stop the event and effect, and remove all DOM side-effects.
