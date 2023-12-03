@@ -221,12 +221,11 @@ export function getController (config) {
     for (let scene of _config.scenes) {
       // if active
       if (!scene.disabled) {
-        const {start, end, duration} = scene;
-        // QUESTION: scene will have startX, startY and endX andY ?
+        const {startX, startY, endX, endY, durationX, durationY} = scene;
 
         // calculate scene's progress
-        const progressX = calcProgress(x, start, end, duration); 
-        const progressY = calcProgress(y, start, end, duration);
+        const progressX = calcProgress(x, startX, endX, durationX); 
+        const progressY = calcProgress(y, startY, endY, durationY);
         const currentProgress = {x: progressX, y: progressY}
 
         const velocity = {vx: velocityX, vy: velocityY} // eh??
