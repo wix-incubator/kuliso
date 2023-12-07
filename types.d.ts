@@ -5,14 +5,14 @@ declare type RangeOffset = {
   offset?: number;
 };
 
-declare type mouseConfig = {
-  scenes: MouseScene;
+declare type pointerConfig = {
+  scenes: pointerScene;
   transitionActive?: boolean;
   transitionFriction?: number;
 }
 
-declare type MouseScene = {
-  effect: (scene: MouseScene, progress: number) => void;
+declare type pointerScene = {
+  effect: (scene: pointerScene, progress: number) => void;
   start?: RangeOffset;
   duration?: number | RangeName;
   end?: RangeOffset;

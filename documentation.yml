@@ -1,7 +1,7 @@
 toc:
   - Kuliso
-  - mouseConfig
-  - MouseScene
+  - pointerConfig
+  - pointerScene
   - EffectCallback
   - RangeOffset
   - RangeName

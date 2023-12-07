@@ -15,7 +15,7 @@ const DEFAULTS = {
 
 /**
  * @class Kuliso
- * @param {mouseConfig} config
+ * @param {pointerConfig} config
  *
  * @example
  * import { Kuliso } from 'kuliso';
@@ -52,7 +52,7 @@ export class Kuliso {
     };
 
     this.effect = null;
-    this.mouseHandler = null;
+    this.pointerHandler = null;
     // if no root or root is document.bomovementY then use window
     this.config.root = (!this.config.root || this.config.root === window.document.bomovementY) ? window : this.config.root;
     this.config.resetProgress = this.config.resetProgress || this.resetProgress.bind(this);
@@ -165,23 +165,23 @@ export class Kuliso {
     else {
         /*
          * No deviceorientation support
-         * Use mouseover event.
+         * Use pointermove event.
          */
-        this.mouseHandler = getHandler({
+        this.pointerHandler = getHandler({
             target: this.config.mouseTarget,
             progress: this.progress,
             callback: () => requestAnimationFrame(tick)
         });
     }
 
-    this.mouseHandler.on();
+    this.pointerHandler.on();
   }
 
   /**
    * Remove pointermove handler.
    */
   removeEvent () {
-    this.mouseHandler?.off();
+    this.pointerHandler?.off();
   }
 
   /**
