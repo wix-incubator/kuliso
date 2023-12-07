@@ -35,22 +35,26 @@ export class Kuliso {
       prevX:0, 
       prevY:0,
       vx: 0,
-      vy: 0
-
+      vy: 0,
+      movementX: 0,
+      movementY: 0,
     };
+
     this.currentProgress = {
       x:0, 
       y:0,
       prevX:0, 
       prevY:0,
       vx: 0,
-      vy: 0
+      vy: 0,
+      movementX: 0,
+      movementY: 0,
     };
 
     this.effect = null;
     this.mouseHandler = null;
-    // if no root or root is document.body then use window
-    this.config.root = (!this.config.root || this.config.root === window.document.body) ? window : this.config.root;
+    // if no root or root is document.bomovementY then use window
+    this.config.root = (!this.config.root || this.config.root === window.document.bomovementY) ? window : this.config.root;
     this.config.resetProgress = this.config.resetProgress || this.resetProgress.bind(this);
 
     this._measure = this.config.measure || (() => {
@@ -100,6 +104,8 @@ export class Kuliso {
     this.progress.prevY = y;
     this.progress.vx = 0;
     this.progress.vy = 0;
+    this.progress.movementX = 0;
+    this.progress.movementY = 0;
 
     if (pointerPosition) {
       this.config.root.scrollTo(x, y);
@@ -114,14 +120,11 @@ export class Kuliso {
   tick (clearLerpFrame) {
 
     if (this.config.velocityActive) {
-      const dx = this.progress.x - this.progress.prevX;
-      const dy = this.progress.y - this.progress.prevY;
+      const factorPx = this.progress.movementX < 0 ? -1 : 1;
+      const factorPy = this.progress.movementY < 0 ? -1 : 1;
 
-      const factorPx = dx < 0 ? -1 : 1;
-      const factorPy = dy < 0 ? -1 : 1;
-
-      this.progress.vx = Math.min(this.config.velocityMax, Math.abs(dx)) / this.config.velocityMax * factorPx;
-      this.progress.vy = Math.min(this.config.velocityMax, Math.abs(dy)) / this.config.velocityMax * factorPy;
+      this.progress.vx = Math.min(this.config.velocityMax, Math.abs(movementX)) / this.config.velocityMax * factorPx;
+      this.progress.vy = Math.min(this.config.velocityMax, Math.abs(movementY)) / this.config.velocityMax * factorPy;
     }
 
     // update effect

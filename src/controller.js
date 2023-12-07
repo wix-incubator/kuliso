@@ -8,7 +8,6 @@ const VIEWPORT_RESIZE_INTERVAL = 100;
  * @type {scrollConfig}
  */
 const DEFAULTS = {
-  horizontal: false,
   observeViewportEntry: true,
   viewportRootMargin: '7% 7%',
   observeViewportResize: false,
@@ -30,7 +29,7 @@ const DEFAULTS = {
  * @return {number} effect progress, between 0 and 1
  */
 function calcProgress (p, start, end, duration) {
-  let progress = { x:0, y:0 };
+  let progress = 0;
 
   if (p >= start && p <= end) {
     progress = duration ? (p - start) / duration : 1;
@@ -71,11 +70,11 @@ function getAbsoluteOffsetContext () {
 }
 
 /*
- * Scroll controller factory
+ * Pointer controller factory
  */
 
 /**
- * Initialize and return a scroll controller.
+ * Initialize and return a pointer controller.
  *
  * @private
  * @param {scrollConfig} config
@@ -84,7 +83,6 @@ function getAbsoluteOffsetContext () {
 export function getController (config) {
   const _config = defaultTo(config, DEFAULTS);
   const root = _config.root;
-  const horizontal = _config.horizontal;
   const scenesByElement = new WeakMap();
   let viewportSize = getViewportSize(root, horizontal);
 
@@ -232,11 +230,6 @@ export function getController (config) {
 
         // run effect
         scene.effect(scene, currentProgress, velocity);
-
-        // if fixed position then disable after one tick
-        if (scene.isFixed) {
-          scene.disabled = true;
-        }
       }
     }
 
@@ -248,10 +241,6 @@ export function getController (config) {
    * Removes all side effects and deletes all objects.
    */
    function destroy () {
-    if (viewportObserver) {
-      viewportObserver.disconnect();
-      viewportObserver = null;
-    }
 
     if (rangesResizeObserver) {
       rangesResizeObserver.disconnect();

@@ -19,7 +19,7 @@ export function getHandler ({target, progress, callback}) {
   const {width, height, left, top} = rect;
 
   function handler (event) {
-    const {clientX, clientY} = event;
+    const {clientX, clientY, movementX, movementY} = event;
 
     // percentage of position progress
     const x = clamp(0, 1, (clientX - left) / width);
@@ -29,6 +29,8 @@ export function getHandler ({target, progress, callback}) {
     progress.y = +y.toPrecision(4);
     progress.h = height;
     progress.w = width;
+    progress.movementX = movementX;
+    progress.movementY = movementY;
 
     callback();
   }
