@@ -1,261 +1,158 @@
-import { debounce, defaultTo } from './utilities.js';
-import { getTransformedScene } from './view.js';
-
-const VIEWPORT_RESIZE_INTERVAL = 100;
+import { getRect, clamp } from './utilities.js';
 
 /**
- * @private
- * @type {scrollConfig}
- */
-const DEFAULTS = {
-  observeViewportEntry: true,
-  viewportRootMargin: '7% 7%',
-  observeViewportResize: false,
-  observeSourcesResize: false
-};
-
-/*
- * Utilities for scroll controller
- */
-
-/**
- * Utility for calculating effect progress.
+ * Return new progress for {x, y} for the farthest-side formula ("cover").
  *
- * @private
- * @param {number} p current scroll position
- * @param {number} start start position
- * @param {number} end end position
- * @param {number} duration duration of effect in scroll pixels
- * @return {number} effect progress, between 0 and 1
+ * @param {Object} target
+ * @param {number} target.left
+ * @param {number} target.top
+ * @param {number} target.width
+ * @param {number} target.height
+ * @param {Object} root
+ * @param {number} root.width
+ * @param {number} root.height
+ * @returns {{x: (x: number) => number, y: (y: number) => number}}
  */
-function calcProgress (p, start, end, duration) {
-  let progress = 0;
+function centerToTargetFactory (target, root) {
+  const layerCenterX = target.left - scrollPosition.x + target.width / 2;
+  const layerCenterY = target.top - scrollPosition.y + target.height / 2;
 
-  if (p >= start && p <= end) {
-    progress = duration ? (p - start) / duration : 1;
-  }
-  else if (p > end) {
-    progress = 1;
-  }
+  const isXStartFarthest = layerCenterX >= root.width / 2;
+  const isYStartFarthest = layerCenterY >= root.height / 2;
 
-  return progress;
-}
+  const xDuration = (isXStartFarthest ? layerCenterX : root.width - layerCenterX) * 2;
+  const yDuration = (isYStartFarthest ? layerCenterY : root.height - layerCenterY) * 2;
 
-/**
- *
- * @param {Window|HTMLElement} root
- * @param {boolean} isHorizontal
- * @return {number}
- */
-function getViewportSize (root, isHorizontal) {
-  if (root === window) {
-    return window.visualViewport
-      ? isHorizontal
-        ? window.visualViewport.width
-        : window.visualViewport.height
-      : isHorizontal
-        ? window.document.documentElement.clientWidth
-        : window.document.documentElement.clientHeight;
-  }
+  const x0 = isXStartFarthest ? 0 : layerCenterX - xDuration / 2;
+  const y0 = isYStartFarthest ? 0 : layerCenterY - yDuration / 2;
 
-  return isHorizontal ? root.clientWidth : root.clientHeight;
-}
-
-function getAbsoluteOffsetContext () {
-  // TODO: re-calc on viewport resize
   return {
-    viewportWidth: window.visualViewport.width,
-    viewportHeight: window.visualViewport.height
+    x(x1) { return (x1 - x0) / xDuration; },
+    y(y1) { return (y1 - y0) / yDuration; }
   };
 }
 
-/*
- * Pointer controller factory
+
+const scrollPosition = {x: 0, y: 0};
+
+/**
+ * Updates scroll position on scrollend.
+ * Used when root is entire viewport and centeredOnTarget=true.
  */
+function scrollend (tick, lastProgress) {
+  scrollPosition.x = window.scrollX;
+  scrollPosition.y = window.scrollY;
+
+  requestAnimationFrame(() => tick && tick(lastProgress));
+}
+
+/**
+ * Update root rect when root is entire viewport.
+ *
+ * @param {PointerConfig} config
+ */
+function windowResize (config) {
+  config.rect.width = window.visualViewport.width;
+  config.rect.height = window.visualViewport.height;
+}
+
+/**
+ * Observe and update root rect when root is an element.
+ *
+ * @param {PointerConfig} config
+ * @returns {ResizeObserver}
+ */
+function observeRootResize (config) {
+  const observer = new ResizeObserver((entries) => {
+    entries.forEach((entry) => {
+      config.rect.width = entry.borderBoxSize[0].inlineSize;
+      config.rect.height = entry.borderBoxSize[0].blockSize;
+    });
+  });
+
+  observer.observe(config.root, { box: 'border-box' });
+
+  return observer;
+}
 
 /**
  * Initialize and return a pointer controller.
  *
  * @private
- * @param {scrollConfig} config
+ * @param {PointerConfig} config
  * @return {{tick: function, destroy: function}}
  */
 export function getController (config) {
-  const _config = defaultTo(config, DEFAULTS);
-  const root = _config.root;
-  const scenesByElement = new WeakMap();
-  let viewportSize = getViewportSize(root, horizontal);
-
-  let lastP;
-  let viewportObserver, rangesResizeObserver, viewportResizeHandler, scrollportResizeObserver;
-  const rangesToObserve = [];
-  const absoluteOffsetContext = getAbsoluteOffsetContext()
+  let hasCenteredToTarget = false;
+  let lastProgress = {x: config.rect.width / 2, y: config.rect.height / 2, vx: 0, vy: 0};
+  let tick, resizeObserver, windowResizeHandler, scrollendHandler;
 
   /*
    * Prepare scenes data.
    */
-  _config.scenes = config.scenes.map((scene, index) => {
-    scene.index = index;
+  config.scenes.forEach((scene) => {
+    if (scene.target && scene.centeredToTarget) {
+      scene.transform = centerToTargetFactory(getRect(scene.target), config.rect);
 
-    if (scene.viewSource && (typeof scene.duration === 'string' || scene.start?.name)) {
-      scene = getTransformedScene(scene, root, viewportSize, horizontal, absoluteOffsetContext);
-
-      if (_config.observeSourcesResize) {
-        rangesToObserve.push(scene);
-      }
-    }
-    else if (scene.end == null) {
-      scene.end = scene.start + scene.duration;
+      hasCenteredToTarget = true;
     }
 
-    if (scene.duration == null) {
-      scene.duration = scene.end - scene.start;
+    if (config.root) {
+      resizeObserver = observeRootResize(config);
     }
-
-    return scene;
+    else {
+      windowResizeHandler = windowResize.bind(null, config);
+      window.addEventListener('resize', windowResizeHandler);
+    }
   });
-
-  if (rangesToObserve.length) {
-    if (window.ResizeObserver) {
-      const targetToScene = new Map();
-
-      rangesResizeObserver = new window.ResizeObserver(function (entries) {
-        entries.forEach(entry => {
-          const scene = targetToScene.get(entry.target);
-          // TODO: try to optimize by using `const {blockSize, inlineSize} = entry.borderBoxSize[0]`
-          _config.scenes[scene.index] = getTransformedScene(scene, root, viewportSize, horizontal, absoluteOffsetContext);
-
-          // replace the old object from the cache with the new one
-          rangesToObserve.splice(rangesToObserve.indexOf(scene), 1, _config.scenes[scene.index]);
-        })
-      });
-
-      rangesToObserve.forEach(scene => {
-        rangesResizeObserver.observe(scene.viewSource, {box: 'border-box'});
-        targetToScene.set(scene.viewSource, scene);
-      });
-    }
-
-    if (_config.observeViewportResize) {
-      viewportResizeHandler = debounce(function () {
-        viewportSize = getViewportSize(root, horizontal);
-
-        const newRanges = rangesToObserve.map(scene => {
-          const newScene = getTransformedScene(scene, root, viewportSize, horizontal, absoluteOffsetContext);
-
-          _config.scenes[scene.index] = newScene;
-
-          return newScene;
-        });
-
-        // reset cache
-        rangesToObserve.length = 0;
-        rangesToObserve.push(...newRanges);
-      }, VIEWPORT_RESIZE_INTERVAL);
-
-      if (root === window) {
-        (window.visualViewport || window).addEventListener('resize', viewportResizeHandler);
-      }
-      else if (window.ResizeObserver) {
-        scrollportResizeObserver = new window.ResizeObserver(viewportResizeHandler);
-        scrollportResizeObserver.observe(root, {box: 'border-box'});
-      }
-    }
-  }
-
-  /*
-   * Observe entry and exit of scenes into view
-   */
-  if (_config.observeViewportEntry && window.IntersectionObserver) {
-    viewportObserver = new window.IntersectionObserver(function (intersections) {
-      intersections.forEach(intersection => {
-        (scenesByElement.get(intersection.target) || []).forEach(scene => {
-          scene.disabled = !intersection.isIntersecting;
-        });
-      });
-    }, {
-      root: root === window ? window.document : root,
-      rootMargin: _config.viewportRootMargin,
-      threshold: 0
-    });
-
-    _config.scenes.forEach(scene => {
-      if (scene.viewSource) {
-        let scenesArray = scenesByElement.get(scene.viewSource);
-
-        if (!scenesArray) {
-          scenesArray = [];
-          scenesByElement.set(scene.viewSource, scenesArray);
-
-          viewportObserver.observe(scene.viewSource);
-        }
-
-        scenesArray.push(scene);
-      }
-    });
-  }
 
   /**
    * Updates progress in all scene effects.
    *
    * @private
    * @param {Object} progress
-   * @param {number} progress.p
-   * @param {number} progress.vp
+   * @param {number} progress.x
+   * @param {number} progress.y
+   * @param {number} progress.vx
+   * @param {number} progress.vy
    */
-  function tick (progress) {
-    const x = +progress.x.toFixed(1)
-    const y = +progress.y.toFixed(1)
+  tick = function (progress) {
+    for (let scene of config.scenes) {
+      // get scene's progress
+      const x = +clamp(0, 1, scene.transform?.x(progress.x) || progress.x / config.rect.width).toPrecision(4);
+      const y = +clamp(0, 1, scene.transform?.y(progress.y) || progress.y / config.rect.height).toPrecision(4);
 
-    const velocityX = +progress.vx.toFixed(4);
-    const velocityY = +progress.vy.toFixed(4);
+      const velocity = {x: progress.vx, y: progress.vy};
 
-    // if nothing changed bail out
-    if (x === lastP.x && y === lastP.y) return;
-
-    /*
-     * Perform scene progression.
-     */
-    for (let scene of _config.scenes) {
-      // if active
-      if (!scene.disabled) {
-        const {startX, startY, endX, endY, durationX, durationY} = scene;
-
-        // calculate scene's progress
-        const progressX = calcProgress(x, startX, endX, durationX); 
-        const progressY = calcProgress(y, startY, endY, durationY);
-        const currentProgress = {x: progressX, y: progressY}
-
-        const velocity = {vx: velocityX, vy: velocityY} // eh??
-
-        // run effect
-        scene.effect(scene, currentProgress, velocity);
-      }
+      // run effect
+      scene.effect(scene, {x, y}, velocity);
     }
 
-    // cache last position
-    lastP = { x, y };
+    Object.assign(lastProgress, progress);
+  }
+
+  if (hasCenteredToTarget) {
+    scrollendHandler = scrollend.bind(null, tick, lastProgress)
+    document.addEventListener('scrollend', scrollendHandler);
   }
 
   /**
    * Removes all side effects and deletes all objects.
    */
-   function destroy () {
+  function destroy () {
+    document.removeEventListener('scrollend', scrollendHandler);
 
-    if (rangesResizeObserver) {
-      rangesResizeObserver.disconnect();
-      rangesResizeObserver = null;
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+      resizeObserver = null;
+    }
+    else {
+      window.removeEventListener('resize', windowResizeHandler);
+      windowResizeHandler = null;
     }
 
-    if (viewportResizeHandler) {
-      if (scrollportResizeObserver) {
-        scrollportResizeObserver.disconnect();
-        scrollportResizeObserver = null;
-      }
-      else {
-        (window.visualViewport || window).removeEventListener('resize', viewportResizeHandler);
-      }
-    }
+    tick = null;
+    lastProgress = null;
   }
 
   /**

@@ -1,14 +1,5 @@
 toc:
-  - Kuliso
-  - pointerConfig
-  - pointerScene
+  - Pointer
+  - PointerConfig
+  - PointerScene
   - EffectCallback
-  - RangeOffset
-  - RangeName
-  - CSSUnitValue
-  - AbsoluteOffsetContext
-  - name: utilities
-    children:
-      - lerp
-      - defaultTo
-      - frameThrottle
