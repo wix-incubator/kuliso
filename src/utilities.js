@@ -14,41 +14,6 @@ function clamp (min, max, value) {
 }
 
 /**
- * Returns a new Object with the properties of the first argument
- * assigned to it, and the second argument as its prototype, so
- * its properties are served as defaults.
- *
- * @param {Object} obj properties to assign
- * @param {Object|null} defaults
- * @return {Object}
- */
-function defaultTo (obj, defaults) {
-  return Object.assign(Object.create(defaults), obj);
-}
-
-/**
- * Copies all given objects into a new Object.
- *
- * @param {...Object} objects
- * @return {Object}
- */
-function clone (...objects) {
-  return Object.assign({}, ...objects);
-}
-
-/**
- * Interpolate from a to b by the factor t.
- *
- * @param {number} a start point
- * @param {number} b end point
- * @param {number} t interpolation factor
- * @return {number}
- */
-function lerp (a, b, t) {
-  return a * (1 - t) + b * t;
-}
-
-/**
  * Throttle a function to trigger once per animation frame.
  * Keeps the arguments from last call, even if that call gets ignored.
  *
@@ -70,15 +35,29 @@ function frameThrottle (fn) {
   };
 }
 
-function map (x, a, b, c, d) {
-  return (x - a) * (d - c) / (b - a) + c;
+function getRect (element) {
+  let el = element;
+  let left = 0;
+  let top = 0;
+
+  if (el.offsetParent) {
+    do {
+      left += el.offsetLeft;
+      top += el.offsetTop;
+      el = el.offsetParent;
+    } while (el);
+  }
+
+  return {
+    left,
+    top,
+    width: element.offsetWidth,
+    height: element.offsetHeight
+  };
 }
 
 export {
-  map,
+  getRect,
   clamp,
-  clone,
-  defaultTo,
-  lerp,
   frameThrottle
 };
