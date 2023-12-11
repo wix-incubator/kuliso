@@ -14,24 +14,29 @@ import { getRect, clamp } from './utilities.js';
  * @returns {{x: (x: number) => number, y: (y: number) => number}}
  */
 function centerToTargetFactory (target, root) {
-  const layerCenterX = target.left - scrollPosition.x + target.width / 2;
-  const layerCenterY = target.top - scrollPosition.y + target.height / 2;
-
-  const isXStartFarthest = layerCenterX >= root.width / 2;
-  const isYStartFarthest = layerCenterY >= root.height / 2;
-
-  const xDuration = (isXStartFarthest ? layerCenterX : root.width - layerCenterX) * 2;
-  const yDuration = (isYStartFarthest ? layerCenterY : root.height - layerCenterY) * 2;
-
-  const x0 = isXStartFarthest ? 0 : layerCenterX - xDuration / 2;
-  const y0 = isYStartFarthest ? 0 : layerCenterY - yDuration / 2;
-
+  // we store reference to the arguments and do all calculation on the fly
+  // so that target dims, scroll position, and root dims are always up-to-date
   return {
-    x(x1) { return (x1 - x0) / xDuration; },
-    y(y1) { return (y1 - y0) / yDuration; }
+    x (x1) {
+      const layerCenterX = target.left - scrollPosition.x + target.width / 2;
+      const isXStartFarthest = layerCenterX >= root.width / 2;
+
+      const xDuration = (isXStartFarthest ? layerCenterX : root.width - layerCenterX) * 2;
+      const x0 = isXStartFarthest ? 0 : layerCenterX - xDuration / 2;
+
+      return (x1 - x0) / xDuration;
+    },
+    y (y1) {
+      const layerCenterY = target.top - scrollPosition.y + target.height / 2;
+      const isYStartFarthest = layerCenterY >= root.height / 2;
+
+      const yDuration = (isYStartFarthest ? layerCenterY : root.height - layerCenterY) * 2;
+      const y0 = isYStartFarthest ? 0 : layerCenterY - yDuration / 2;
+
+      return (y1 - y0) / yDuration;
+    }
   };
 }
-
 
 const scrollPosition = {x: 0, y: 0};
 

@@ -1,1 +1,1 @@
-export { Pointer } from './src/Kuliso.js';
+export { Pointer } from './src/Pointer.js';
