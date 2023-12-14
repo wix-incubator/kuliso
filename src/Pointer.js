@@ -19,6 +19,7 @@ export class Pointer {
     this.config = { ...config };
 
     this.effect = null;
+    this._nextTick = null;
 
     const trigger = frameThrottle(() => {
       this.tick();
@@ -48,7 +49,7 @@ export class Pointer {
       this.progress.y = this.config.root ? event.offsetY : event.y;
       this.progress.vx = event.movementX;
       this.progress.vy = event.movementY;
-      trigger();
+      this._nextTick = trigger();
     };
   }
 
@@ -81,6 +82,7 @@ export class Pointer {
   destroy () {
     this.pause();
     this.removeEffect();
+    this._nextTick && cancelAnimationFrame(this._nextTick);
   }
 
   /**
