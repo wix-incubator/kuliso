@@ -18,7 +18,8 @@ function clamp (min, max, value) {
  * Keeps the arguments from last call, even if that call gets ignored.
  *
  * @param {function} fn function to throttle
- * @return {(function(): void)}
+ * @return {(function(): number)} a function that will trigger the throttled function on next animation frame,
+ * returns the requestAnimationFrame id so it can be cancelled
  */
 function frameThrottle (fn) {
   let throttled = false;
@@ -27,7 +28,7 @@ function frameThrottle (fn) {
     if (!throttled) {
       throttled = true;
 
-      window.requestAnimationFrame(() => {
+      return window.requestAnimationFrame(() => {
         throttled = false;
         fn();
       });
