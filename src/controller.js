@@ -123,14 +123,16 @@ export function getController (config) {
    */
   tick = function (progress) {
     for (let scene of config.scenes) {
-      // get scene's progress
-      const x = +clamp(0, 1, scene.transform?.x(progress.x) || progress.x / config.rect.width).toPrecision(4);
-      const y = +clamp(0, 1, scene.transform?.y(progress.y) || progress.y / config.rect.height).toPrecision(4);
+      if (!scene.disabled) {
+        // get scene's progress
+        const x = +clamp(0, 1, scene.transform?.x(progress.x) || progress.x / config.rect.width).toPrecision(4);
+        const y = +clamp(0, 1, scene.transform?.y(progress.y) || progress.y / config.rect.height).toPrecision(4);
 
-      const velocity = {x: progress.vx, y: progress.vy};
+        const velocity = {x: progress.vx, y: progress.vy};
 
-      // run effect
-      scene.effect(scene, {x, y}, velocity);
+        // run effect
+        scene.effect(scene, {x, y}, velocity);
+      }
     }
 
     Object.assign(lastProgress, progress);
