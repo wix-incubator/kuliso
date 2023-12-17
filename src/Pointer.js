@@ -133,6 +133,7 @@ export class Pointer {
  * @property {EffectCallback} effect the effect to perform.
  * @property {boolean} [centeredToTarget] whether this scene's progress is centered on the target's center.
  * @property {HTMLElement} [target] target element for the effect.
+ * @property {boolean} [disabled] whether this scene is disabled.
  */
 
 /**

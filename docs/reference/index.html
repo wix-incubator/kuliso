@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset='utf-8'>
-  <title>kuliso 0.0.1 | Documentation</title>
+  <title>kuliso 0.0.3 | Documentation</title>
   <meta name='description' content='Tiny library for performant pointer-driven or gyroscope-driven effects'>
   <meta name='viewport' content='width=device-width,initial-scale=1'>
   <link href='assets/bass.css' rel='stylesheet'>
@@ -15,7 +15,7 @@
       <div id='split-left' class='overflow-auto fs0 height-viewport-100'>
         <div class='py1 px2'>
           <h3 class='mb0 no-anchor'>kuliso</h3>
-          <div class='mb1'><code>0.0.1</code></div>
+          <div class='mb1'><code>0.0.3</code></div>
           <input
             placeholder='Filter'
             id='filter-input'
@@ -827,6 +827,13 @@ pointer.<span class="hljs-title function_">start</span>();</pre>
           
         </div>
       
+        <div class='space-bottom0'>
+          <span class='code bold'>disabled</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>?)</code>
+          : whether this scene is disabled.
+
+          
+        </div>
+      
     </div>
   
 
@@ -1507,7 +1514,7 @@ Used when root is entire viewport and centeredOnTarget=true.</p>
   <p>Throttle a function to trigger once per animation frame.
 Keeps the arguments from last call, even if that call gets ignored.</p>
 
-    <div class='pre p1 fill-light mt0'>frameThrottle(fn: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">function</a>): (function (): void)</div>
+    <div class='pre p1 fill-light mt0'>frameThrottle(fn: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">function</a>): (function (): <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
   
   
 
@@ -1539,8 +1546,10 @@ Keeps the arguments from last call, even if that call gets ignored.</p>
   
     
       <div class='py1 quiet mt1 prose-big'>Returns</div>
-      <code>(function (): void)</code>:
-        
+      <code>(function (): <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>:
+        a function that will trigger the throttled function on next animation frame,
+returns the requestAnimationFrame id so it can be cancelled
+
       
     
   
