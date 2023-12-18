@@ -1,3 +1,4 @@
+import { scrollend } from 'scrollyfills';
 import { getRect, clamp } from './utilities.js';
 
 /**
