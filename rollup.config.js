@@ -1,5 +1,6 @@
 import progress from 'rollup-plugin-progress';
 import filesize from 'rollup-plugin-filesize';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
 
 export default {
   input: 'src/Pointer.js',
@@ -11,6 +12,7 @@ export default {
     progress({
       clearLine: false
     }),
+    nodeResolve(),
     filesize()
   ]
 };

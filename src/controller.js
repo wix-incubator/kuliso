@@ -1,4 +1,4 @@
-import { scrollend } from 'scrollyfills';
+import 'scrollyfills';
 import { getRect, clamp } from './utilities.js';
 
 /**
@@ -45,7 +45,7 @@ const scrollPosition = {x: 0, y: 0};
  * Updates scroll position on scrollend.
  * Used when root is entire viewport and centeredOnTarget=true.
  */
-function scrollend (tick, lastProgress) {
+function scrollendCallback (tick, lastProgress) {
   scrollPosition.x = window.scrollX;
   scrollPosition.y = window.scrollY;
 
@@ -140,7 +140,7 @@ export function getController (config) {
   }
 
   if (hasCenteredToTarget) {
-    scrollendHandler = scrollend.bind(null, tick, lastProgress)
+    scrollendHandler = scrollendCallback.bind(null, tick, lastProgress)
     document.addEventListener('scrollend', scrollendHandler);
   }
 
