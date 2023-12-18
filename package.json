@@ -1,6 +1,6 @@
 {
   "name": "kuliso",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Tiny library for performant pointer-driven or gyroscope-driven effects",
   "main": "dist/index.cjs",
   "module": "index.js",
