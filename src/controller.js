@@ -1,4 +1,3 @@
-import 'scrollyfills';
 import { getRect, clamp } from './utilities.js';
 
 /**
@@ -148,6 +147,8 @@ export function getController (config) {
    * Removes all side effects and deletes all objects.
    */
   function destroy () {
+    config.scenes.forEach(scene => scene.destroy?.());
+
     document.removeEventListener('scrollend', scrollendHandler);
 
     if (resizeObserver) {

@@ -108,6 +108,24 @@ test('Pointer.destroy() :: sanity test', t => {
     t.is(pointer.effect, null);
 });
 
+test('Pointer.destroy() :: destroy scene', t => {
+    let destroyed = false;
+    const pointer = new Pointer({
+        scenes: [
+            {
+              effect() {},
+              destroy() { destroyed = true; }
+            }
+        ]
+    });
+
+    pointer.start();
+    pointer.destroy();
+
+    t.is(pointer.effect, null);
+    t.is(destroyed, true);
+});
+
 test('Pointer.tick() :: sanity test :: viewport as root', t => {
     let x = 0;
     let y = 0;

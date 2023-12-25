@@ -217,6 +217,8 @@ function getController (config) {
    * Removes all side effects and deletes all objects.
    */
   function destroy () {
+    config.scenes.forEach(scene => scene.destroy?.());
+
     document.removeEventListener('scrollend', scrollendHandler);
 
     if (resizeObserver) {
@@ -374,6 +376,7 @@ class Pointer {
  * @property {boolean} [centeredToTarget] whether this scene's progress is centered on the target's center.
  * @property {HTMLElement} [target] target element for the effect.
  * @property {boolean} [disabled] whether this scene is disabled.
+ * @property {function} [destroy] a function clean up the scene when it's controller is destroyed.
  */
 
 /**

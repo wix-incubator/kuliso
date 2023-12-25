@@ -3,7 +3,7 @@ import filesize from 'rollup-plugin-filesize';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 
 export default {
-  input: 'src/Pointer.js',
+  input: 'src/index.js',
   output: {
     file: 'dist/index.cjs',
     format: 'cjs'
