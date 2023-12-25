@@ -40,6 +40,6 @@
     "rollup-plugin-progress": "^1.1.2"
   },
   "dependencies": {
-    "scrollyfills": "^1.0.0"
+    "scrollyfills": "git@github.com:ydaniv/scrollyfills.git#patch-1"
   }
 }
