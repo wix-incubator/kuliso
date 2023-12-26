@@ -1,6 +1,101 @@
 'use strict';
 
-if("undefined"!=typeof window&&!("onscrollend"in window)){const i=new Event("scrollend"),s=new Set;document.addEventListener("touchstart",e=>{for(let t of e.changedTouches)s.add(t.identifier);},{passive:!0}),document.addEventListener("touchend",e=>{for(let t of e.changedTouches)s.delete(t.identifier);},{passive:!0});let l=new WeakMap;function e(e,t,n){let o=e[t];e[t]=function(){let e=Array.prototype.slice.apply(arguments,[0]);o.apply(this,e),e.unshift(o),n.apply(this,e);};}function t(e,t,n,o){if("scroll"!=t&&"scrollend"!=t)return;let r=this,d=l.get(r);if(void 0===d){let t=0;d={scrollListener:e=>{clearTimeout(t),t=setTimeout(()=>{s.size?setTimeout(d.scrollListener,100):(r&&r.dispatchEvent(i),t=0);},100);},listeners:0},e.apply(r,["scroll",d.scrollListener]),l.set(r,d);}d.listeners++;}function n(e,t,n){if("scroll"!=t&&"scrollend"!=t)return;let o=this,i=l.get(o);void 0!==i&&(i[t]--,--i.listeners>0||(e.apply(o,["scroll",i.scrollListener]),l.delete(o)));}e(Element.prototype,"addEventListener",t),e(window,"addEventListener",t),e(document,"addEventListener",t),e(Element.prototype,"removeEventListener",n),e(window,"removeEventListener",n),e(document,"removeEventListener",n);}
+const supported = typeof window == 'undefined' ? true : "onscrollend" in window;
+
+if (!supported) {
+  const scrollendEvent = new Event('scrollend');
+  const pointers = new Set();
+
+  // Track if any pointer is active
+  document.addEventListener('touchstart', e => {
+    for (let touch of e.changedTouches)
+      pointers.add(touch.identifier);
+  }, {passive: true});
+
+  document.addEventListener('touchend', e => {
+    for (let touch of e.changedTouches)
+      pointers.delete(touch.identifier);
+  }, {passive: true});
+
+  // Map of scroll-observed elements.
+  let observed = new WeakMap();
+
+  // Forward and observe calls to a native method.
+  function observe(proto, method, handler) {
+    let native = proto[method];
+    proto[method] = function() {
+      let args = Array.prototype.slice.apply(arguments, [0]);
+      native.apply(this, args);
+      args.unshift(native);
+      handler.apply(this, args);
+    };
+  }
+
+  function onAddListener(originalFn, type, handler, options) {
+    // Polyfill scrollend event on any element for which the developer listens
+    // to 'scrollend' explicitly or 'scroll' (so that adding a scrollend listener
+    // from within a scroll listener works).
+    if (type != 'scroll' && type != 'scrollend')
+      return;
+
+    let scrollport = this;
+    let data = observed.get(scrollport);
+    if (data === undefined) {
+      let timeout = 0;
+      data = {
+        scrollListener: (evt) => {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => {
+            if (pointers.size) {
+              // if pointer(s) are down, wait longer
+              setTimeout(data.scrollListener, 100);
+            }
+            else {
+              // dispatch
+              if (scrollport) {
+                scrollport.dispatchEvent(scrollendEvent);
+              }
+              timeout = 0;
+            }
+          }, 100);
+        },
+        listeners: 0, // Count of number of listeners.
+      };
+      originalFn.apply(scrollport, ['scroll', data.scrollListener]);
+      observed.set(scrollport, data);
+    }
+    data.listeners++;
+  }
+
+  function onRemoveListener(originalFn, type, handler) {
+    if (type != 'scroll' && type != 'scrollend')
+      return;
+    let scrollport = this;
+    let data = observed.get(scrollport);
+
+    // Mismatched addEventListener / removeEventListener
+    // TODO: Should we explicitly track added listeners to prevent this?
+    if (data === undefined)
+      return;
+
+    data[type]--;
+    // If there are still listeners, nothing more to do.
+    if (--data.listeners > 0)
+      return;
+
+    // Otherwise, remove the added listeners.
+    originalFn.apply(scrollport, ['scroll', data.scrollListener]);
+    observed.delete(scrollport);
+  }
+
+  observe(Element.prototype, 'addEventListener', onAddListener);
+  observe(window, 'addEventListener', onAddListener);
+  observe(document, 'addEventListener', onAddListener);
+  observe(Element.prototype, 'removeEventListener', onRemoveListener);
+  observe(window, 'removeEventListener', onRemoveListener);
+  observe(document, 'removeEventListener', onRemoveListener);
+  // TODO: Polyfill onscroll, onscrollend as well?
+}
 
 /**
  * Clamps a value between limits.
