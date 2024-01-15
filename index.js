@@ -1,1 +1,1 @@
-export { Pointer } from './src/Pointer.js';
+export { Pointer, Gyro } from './src/index.js';
