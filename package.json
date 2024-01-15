@@ -9,8 +9,8 @@
   "scripts": {
     "build": "rollup -c",
     "test": "c8 ava test/*.spec.js -s",
-    "test:debug": "ava test/*.spec.js -s",
-    "docs": "documentation build src/Pointer.js -f html -o docs/reference -c documentation.yml",
+    "test:debug": "ava test/Gyro.spec.js -s",
+    "docs": "documentation build src/index.js -f html -o docs/reference -c documentation.yml",
     "rtfm": "npm run docs && http-server ./docs/reference"
   },
   "repository": {

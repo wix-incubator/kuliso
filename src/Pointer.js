@@ -130,7 +130,7 @@ export class Pointer {
  * @typedef {Object} PointerScene
  * @desc A configuration object for a scene. Must be provided an effect function.
  * @example { effects: (scene, p) => { animation.currentTime = p.x; } }
- * @property {EffectCallback} effect the effect to perform.
+ * @property {PointerEffectCallback} effect the effect to perform.
  * @property {boolean} [centeredToTarget] whether this scene's progress is centered on the target's center.
  * @property {HTMLElement} [target] target element for the effect.
  * @property {boolean} [disabled] whether this scene is disabled.
@@ -138,7 +138,7 @@ export class Pointer {
  */
 
 /**
- * @typedef {function(scene: PointerScene, progress: {x: number, y: number}, velocity: {x: number, y: number}): void} EffectCallback
+ * @typedef {function(scene: PointerScene, progress: {x: number, y: number}, velocity: {x: number, y: number}): void} PointerEffectCallback
  * @param {PointerScene} scene
  * @param {{x: number, y: number}} progress
  * @param {{x: number, y: number}} velocity

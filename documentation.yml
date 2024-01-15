@@ -2,4 +2,8 @@ toc:
   - Pointer
   - PointerConfig
   - PointerScene
-  - EffectCallback
+  - PointerEffectCallback
+  - Gyro
+  - GyroConfig
+  - GyroScene
+  - GyroEffectCallback
