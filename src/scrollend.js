@@ -36,7 +36,7 @@ if (!supported) {
     if (type != 'scroll' && type != 'scrollend')
       return;
 
-    let scrollport = this;
+    let scrollport = this || window;
     let data = observed.get(scrollport);
     if (data === undefined) {
       let timeout = 0;
