@@ -68,7 +68,7 @@ if (!supported) {
   function onRemoveListener(originalFn, type, handler) {
     if (type != 'scroll' && type != 'scrollend')
       return;
-    let scrollport = this;
+    let scrollport = this || window;
     let data = observed.get(scrollport);
 
     // Mismatched addEventListener / removeEventListener
