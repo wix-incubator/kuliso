@@ -1,6 +1,6 @@
 const supported = typeof window == 'undefined' ? true : "onscrollend" in window;
 
-if (!supported) {
+if (!supported && ! 'HR_INSTANCE' in window) {
   const scrollendEvent = new Event('scrollend');
   const pointers = new Set();
 
