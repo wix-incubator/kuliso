@@ -2,7 +2,7 @@
 
 const supported = typeof window == 'undefined' ? true : "onscrollend" in window;
 
-if (!supported) {
+if (!supported && !('HR_INSTANCE' in window)) {
   const scrollendEvent = new Event('scrollend');
   const pointers = new Set();
 
@@ -38,7 +38,7 @@ if (!supported) {
     if (type != 'scroll' && type != 'scrollend')
       return;
 
-    let scrollport = this;
+    let scrollport = this || window;
     let data = observed.get(scrollport);
     if (data === undefined) {
       let timeout = 0;
@@ -70,7 +70,7 @@ if (!supported) {
   function onRemoveListener(originalFn, type, handler) {
     if (type != 'scroll' && type != 'scrollend')
       return;
-    let scrollport = this;
+    let scrollport = this || window;
     let data = observed.get(scrollport);
 
     // Mismatched addEventListener / removeEventListener
