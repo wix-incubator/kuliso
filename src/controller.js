@@ -1,4 +1,5 @@
 import { getRect, clamp } from './utilities.js';
+import { addScrollendListener } from './scrollend.js';
 
 /**
  * Return new progress for {x, y} for the farthest-side formula ("cover").
@@ -11,9 +12,10 @@ import { getRect, clamp } from './utilities.js';
  * @param {Object} root
  * @param {number} root.width
  * @param {number} root.height
+ * @param {{x: number, y: number}} scrollPosition
  * @returns {{x: (x: number) => number, y: (y: number) => number}}
  */
-function centerToTargetFactory (target, root) {
+function centerToTargetFactory (target, root, scrollPosition) {
   // we store reference to the arguments and do all calculation on the fly
   // so that target dims, scroll position, and root dims are always up-to-date
   return {
@@ -38,15 +40,13 @@ function centerToTargetFactory (target, root) {
   };
 }
 
-const scrollPosition = {x: 0, y: 0};
-
 /**
  * Updates scroll position on scrollend.
  * Used when root is entire viewport and centeredOnTarget=true.
  */
 function scrollendCallback (tick, lastProgress) {
-  scrollPosition.x = window.scrollX;
-  scrollPosition.y = window.scrollY;
+  this.x = window.scrollX;
+  this.y = window.scrollY;
 
   requestAnimationFrame(() => tick && tick(lastProgress));
 }
@@ -57,8 +57,8 @@ function scrollendCallback (tick, lastProgress) {
  * @param {PointerConfig} config
  */
 function windowResize (config) {
-  config.rect.width = window.visualViewport.width;
-  config.rect.height = window.visualViewport.height;
+  config.rect.width = window.document.documentElement.clientWidth;
+  config.rect.height = window.document.documentElement.clientHeight;
 }
 
 /**
@@ -90,14 +90,16 @@ function observeRootResize (config) {
 export function getController (config) {
   let hasCenteredToTarget = false;
   let lastProgress = {x: config.rect.width / 2, y: config.rect.height / 2, vx: 0, vy: 0};
-  let tick, resizeObserver, windowResizeHandler, scrollendHandler;
+  let tick, resizeObserver, windowResizeHandler, scrollendHandler, removeScrollendListener;
+
+  const scrollPosition = {x: 0, y: 0};
 
   /*
    * Prepare scenes data.
    */
   config.scenes.forEach((scene) => {
     if (scene.target && scene.centeredToTarget) {
-      scene.transform = centerToTargetFactory(getRect(scene.target), config.rect);
+      scene.transform = centerToTargetFactory(getRect(scene.target), config.rect, scrollPosition);
 
       hasCenteredToTarget = true;
     }
@@ -139,8 +141,8 @@ export function getController (config) {
   }
 
   if (hasCenteredToTarget) {
-    scrollendHandler = scrollendCallback.bind(null, tick, lastProgress)
-    document.addEventListener('scrollend', scrollendHandler);
+    scrollendHandler = scrollendCallback.bind(scrollPosition, tick, lastProgress)
+    removeScrollendListener = addScrollendListener(document, scrollendHandler);
   }
 
   /**
@@ -149,7 +151,7 @@ export function getController (config) {
   function destroy () {
     config.scenes.forEach(scene => scene.destroy?.());
 
-    document.removeEventListener('scrollend', scrollendHandler);
+    removeScrollendListener?.();
 
     if (resizeObserver) {
       resizeObserver.disconnect();

@@ -37,12 +37,16 @@ function generateElement ({width, height}) {
 }
 
 test.beforeEach(() => {
-    let resizeHandler, scrollendHandler;
+    let resizeHandler, scrollHandler;
 
+    global.setTimeout = function (fn) { fn(); };
     global.window = {
-        visualViewport: {
-            width: 400,
-            height: 200
+        onscrollend: {},
+        document: {
+          documentElement: {
+            clientWidth: 400,
+            clientHeight: 200
+          }
         },
         addEventListener (type, handler) {
             if (type === 'resize') {
@@ -51,27 +55,35 @@ test.beforeEach(() => {
         },
         removeEventListener () {},
         resize (width, height) {
-            this.visualViewport.width = width;
-            this.visualViewport.height = height;
+            this.document.documentElement.clientWidth = width;
+            this.document.documentElement.clientHeight = height;
             resizeHandler?.();
         },
         scrollTo (x, y) {
             this.scrollY = y;
             this.scrollX = x;
-            scrollendHandler?.();
+            scrollHandler?.();
         }
     };
     global.document = {
         addEventListener (type, handler) {
             if (type === 'scrollend') {
-                scrollendHandler = handler;
+                scrollHandler = handler;
+            } else if (type === 'scroll') {
+                scrollHandler = handler;
             }
         },
         removeEventListener () {}
     };
     global.ResizeObserver = ResizeObserver;
     global.requestAnimationFrame = function () {};
-})
+});
+
+test.afterEach(() => {
+  global.window.onscrollend = {};
+  global.window.scrollX = 0;
+  global.window.scrollY = 0;
+});
 
 test('Pointer.constructor :: sanity test', t => {
     const pointer = new Pointer({
@@ -235,6 +247,40 @@ test('Pointer.tick() :: update on window.resize', t => {
 });
 
 test('Pointer.tick() :: centeredToTarget=true :: update on window.scrollend', t => {
+    let x = 0;
+    let y = 0;
+    const target = generateElement({width: 100, height: 100});
+    const pointer = new Pointer({
+        scenes: [
+            {
+                target,
+                centeredToTarget: true,
+                effect(scene, progress) {
+                    x = progress.x;
+                    y = progress.y;
+                }
+            }
+        ]
+    });
+
+    pointer.start();
+    pointer.progress.x = 50;
+    pointer.progress.y = 50;
+    pointer.tick();
+
+    t.is(x, 0.5);
+    t.is(y, 0.5);
+
+    global.window.scrollTo(0, 50);
+    pointer.tick();
+
+    t.is(x, 0.5);
+    t.is(y, 250 / 400);
+});
+
+test('Pointer.tick() :: centeredToTarget=true :: update on window.scrollend :: with polyfill', t => {
+    delete global.window.onscrollend;
+
     let x = 0;
     let y = 0;
     const target = generateElement({width: 100, height: 100});

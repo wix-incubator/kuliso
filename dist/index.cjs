@@ -1,102 +1,5 @@
 'use strict';
 
-const supported = typeof window == 'undefined' ? true : "onscrollend" in window;
-
-if (!supported && !('HR_INSTANCE' in window)) {
-  const scrollendEvent = new Event('scrollend');
-  const pointers = new Set();
-
-  // Track if any pointer is active
-  document.addEventListener('touchstart', e => {
-    for (let touch of e.changedTouches)
-      pointers.add(touch.identifier);
-  }, {passive: true});
-
-  document.addEventListener('touchend', e => {
-    for (let touch of e.changedTouches)
-      pointers.delete(touch.identifier);
-  }, {passive: true});
-
-  // Map of scroll-observed elements.
-  let observed = new WeakMap();
-
-  // Forward and observe calls to a native method.
-  function observe(proto, method, handler) {
-    let native = proto[method];
-    proto[method] = function() {
-      let args = Array.prototype.slice.apply(arguments, [0]);
-      native.apply(this, args);
-      args.unshift(native);
-      handler.apply(this, args);
-    };
-  }
-
-  function onAddListener(originalFn, type, handler, options) {
-    // Polyfill scrollend event on any element for which the developer listens
-    // to 'scrollend' explicitly or 'scroll' (so that adding a scrollend listener
-    // from within a scroll listener works).
-    if (type != 'scroll' && type != 'scrollend')
-      return;
-
-    let scrollport = this || window;
-    let data = observed.get(scrollport);
-    if (data === undefined) {
-      let timeout = 0;
-      data = {
-        scrollListener: (evt) => {
-          clearTimeout(timeout);
-          timeout = setTimeout(() => {
-            if (pointers.size) {
-              // if pointer(s) are down, wait longer
-              setTimeout(data.scrollListener, 100);
-            }
-            else {
-              // dispatch
-              if (scrollport) {
-                scrollport.dispatchEvent(scrollendEvent);
-              }
-              timeout = 0;
-            }
-          }, 100);
-        },
-        listeners: 0, // Count of number of listeners.
-      };
-      originalFn.apply(scrollport, ['scroll', data.scrollListener]);
-      observed.set(scrollport, data);
-    }
-    data.listeners++;
-  }
-
-  function onRemoveListener(originalFn, type, handler) {
-    if (type != 'scroll' && type != 'scrollend')
-      return;
-    let scrollport = this || window;
-    let data = observed.get(scrollport);
-
-    // Mismatched addEventListener / removeEventListener
-    // TODO: Should we explicitly track added listeners to prevent this?
-    if (data === undefined)
-      return;
-
-    data[type]--;
-    // If there are still listeners, nothing more to do.
-    if (--data.listeners > 0)
-      return;
-
-    // Otherwise, remove the added listeners.
-    originalFn.apply(scrollport, ['scroll', data.scrollListener]);
-    observed.delete(scrollport);
-  }
-
-  observe(Element.prototype, 'addEventListener', onAddListener);
-  observe(window, 'addEventListener', onAddListener);
-  observe(document, 'addEventListener', onAddListener);
-  observe(Element.prototype, 'removeEventListener', onRemoveListener);
-  observe(window, 'removeEventListener', onRemoveListener);
-  observe(document, 'removeEventListener', onRemoveListener);
-  // TODO: Polyfill onscroll, onscrollend as well?
-}
-
 /**
  * Clamps a value between limits.
  *
@@ -165,6 +68,76 @@ function getRect (element) {
   };
 }
 
+let listeners = 0;
+const pointers = new Set();
+
+function initScrollendPolyfill () {
+  const touchStartHandler = e => {
+    for (let touch of e.changedTouches) {
+      pointers.add(touch.identifier);
+    }
+  };
+  const touchEndHandler = e => {
+    for (let touch of e.changedTouches) {
+      pointers.delete(touch.identifier);
+    }
+  };
+  // Track if any pointer is active
+  document.addEventListener('touchstart', touchStartHandler, {passive: true});
+  document.addEventListener('touchend', touchEndHandler, {passive: true});
+
+  return function () {
+    pointers.clear();
+    document.removeEventListener('touchstart', touchStartHandler);
+    document.removeEventListener('touchend', touchEndHandler);
+  };
+}
+
+function addScrollendListener (target, listener) {
+  if ('onscrollend' in window) {
+    target.addEventListener('scrollend', listener);
+
+    return function () {
+      target.removeEventListener('scrollend', listener);
+    };
+  }
+
+  let timeout = 0;
+  let removeScrollendPolyfill;
+
+  if (!listeners) {
+    removeScrollendPolyfill = initScrollendPolyfill();
+  }
+
+  listeners += 1;
+
+  function scrollListener (evt) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      if (pointers.size) {
+        // if pointer(s) are down, wait longer
+        setTimeout(scrollListener, 100);
+      }
+      else {
+        // dispatch
+        listener(evt);
+        timeout = 0;
+      }
+    }, 100);
+  }
+
+  target.addEventListener('scroll', scrollListener);
+
+  return function () {
+    target.removeEventListener('scroll', scrollListener);
+    listeners -= 1;
+
+    if (!listeners) {
+      removeScrollendPolyfill();
+    }
+  };
+}
+
 /**
  * Return new progress for {x, y} for the farthest-side formula ("cover").
  *
@@ -176,9 +149,10 @@ function getRect (element) {
  * @param {Object} root
  * @param {number} root.width
  * @param {number} root.height
+ * @param {{x: number, y: number}} scrollPosition
  * @returns {{x: (x: number) => number, y: (y: number) => number}}
  */
-function centerToTargetFactory (target, root) {
+function centerToTargetFactory (target, root, scrollPosition) {
   // we store reference to the arguments and do all calculation on the fly
   // so that target dims, scroll position, and root dims are always up-to-date
   return {
@@ -203,15 +177,13 @@ function centerToTargetFactory (target, root) {
   };
 }
 
-const scrollPosition = {x: 0, y: 0};
-
 /**
  * Updates scroll position on scrollend.
  * Used when root is entire viewport and centeredOnTarget=true.
  */
 function scrollendCallback (tick, lastProgress) {
-  scrollPosition.x = window.scrollX;
-  scrollPosition.y = window.scrollY;
+  this.x = window.scrollX;
+  this.y = window.scrollY;
 
   requestAnimationFrame(() => tick && tick(lastProgress));
 }
@@ -222,8 +194,8 @@ function scrollendCallback (tick, lastProgress) {
  * @param {PointerConfig} config
  */
 function windowResize (config) {
-  config.rect.width = window.visualViewport.width;
-  config.rect.height = window.visualViewport.height;
+  config.rect.width = window.document.documentElement.clientWidth;
+  config.rect.height = window.document.documentElement.clientHeight;
 }
 
 /**
@@ -255,14 +227,16 @@ function observeRootResize (config) {
 function getController$1 (config) {
   let hasCenteredToTarget = false;
   let lastProgress = {x: config.rect.width / 2, y: config.rect.height / 2, vx: 0, vy: 0};
-  let tick, resizeObserver, windowResizeHandler, scrollendHandler;
+  let tick, resizeObserver, windowResizeHandler, scrollendHandler, removeScrollendListener;
+
+  const scrollPosition = {x: 0, y: 0};
 
   /*
    * Prepare scenes data.
    */
   config.scenes.forEach((scene) => {
     if (scene.target && scene.centeredToTarget) {
-      scene.transform = centerToTargetFactory(getRect(scene.target), config.rect);
+      scene.transform = centerToTargetFactory(getRect(scene.target), config.rect, scrollPosition);
 
       hasCenteredToTarget = true;
     }
@@ -304,8 +278,8 @@ function getController$1 (config) {
   };
 
   if (hasCenteredToTarget) {
-    scrollendHandler = scrollendCallback.bind(null, tick, lastProgress);
-    document.addEventListener('scrollend', scrollendHandler);
+    scrollendHandler = scrollendCallback.bind(scrollPosition, tick, lastProgress);
+    removeScrollendListener = addScrollendListener(document, scrollendHandler);
   }
 
   /**
@@ -314,7 +288,7 @@ function getController$1 (config) {
   function destroy () {
     config.scenes.forEach(scene => scene.destroy?.());
 
-    document.removeEventListener('scrollend', scrollendHandler);
+    removeScrollendListener?.();
 
     if (resizeObserver) {
       resizeObserver.disconnect();
@@ -369,8 +343,8 @@ class Pointer {
         height: this.config.root.offsetHeight
       }
       : {
-        width: window.visualViewport.width,
-        height: window.visualViewport.height
+        width: window.document.documentElement.clientWidth,
+        height: window.document.documentElement.clientHeight
       };
 
 

@@ -32,8 +32,8 @@ export class Pointer {
         height: this.config.root.offsetHeight
       }
       : {
-        width: window.visualViewport.width,
-        height: window.visualViewport.height
+        width: window.document.documentElement.clientWidth,
+        height: window.document.documentElement.clientHeight
       };
 
 
