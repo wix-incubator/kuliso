@@ -1,6 +1,7 @@
 declare type PointerConfig = {
   scenes: PointerScene;
   root?: HTMLElement;
+  noThrottle?: boolean;
 }
 
 declare type PointerScene = {
