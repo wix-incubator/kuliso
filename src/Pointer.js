@@ -21,9 +21,11 @@ export class Pointer {
     this.effect = null;
     this._nextTick = null;
 
-    const trigger = frameThrottle(() => {
-      this.tick();
-    });
+    const trigger = this.config.noThrottle
+      ? () => { this.tick(); }
+      : frameThrottle(() => {
+        this.tick();
+      });
 
     // in no root then use the viewport's size
     this.config.rect = this.config.root
@@ -72,7 +74,6 @@ export class Pointer {
    * Handle animation frame work.
    */
   tick () {
-    // update effect
     this.effect.tick(this.progress);
   }
 
@@ -124,6 +125,7 @@ export class Pointer {
  * @property {PointerScene[]} scenes list of effect scenes to perform during pointermove.
  * @property {HTMLElement} [root] element to use as hit area for pointermove events. Defaults to entire viewport.
  * @property {{width: number, height: number}} [rect] created automatically on Pointer construction.
+ * @property {boolean} [noThrottle] whether to disable throttling the effect by framerate.
  */
 
 /**
