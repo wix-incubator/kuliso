@@ -331,12 +331,26 @@ class Pointer {
 
     this.effect = null;
     this._nextTick = null;
+    this._nextTransitionTick = null;
+    this._startTime = 0;
 
-    const trigger = this.config.noThrottle
-      ? () => { this.tick(); }
-      : frameThrottle(() => {
-        this.tick();
-      });
+    let trigger;
+
+    if (this.config.transitionDuration) {
+      trigger = this.config.noThrottle
+        ? () => this.transition()
+        : frameThrottle(() => this.transition());
+    }
+    else {
+      trigger = this.config.noThrottle
+        ? () => {
+          this.tick();
+          return null;
+        }
+        : frameThrottle(() => {
+          this.tick();
+        });
+    }
 
     // in no root then use the viewport's size
     this.config.rect = this.config.root
@@ -356,8 +370,12 @@ class Pointer {
       vx: 0,
       vy: 0
     };
+    this.previousProgress = { ...this.progress };
+    this.currentProgress = null;
 
     this._measure = (event) => {
+      Object.assign(this.previousProgress, this.currentProgress || this.progress);
+
       this.progress.x = this.config.root ? event.offsetX : event.x;
       this.progress.y = this.config.root ? event.offsetY : event.y;
       this.progress.vx = event.movementX;
@@ -389,12 +407,46 @@ class Pointer {
   }
 
   /**
+   * Starts a transition from the previous progress to the current progress.
+   *
+   * @returns {number} the requestAnimationFrame id for the transition tick.
+   */
+  transition () {
+    const duration = this.config.transitionDuration;
+    const easing = this.config.transitionEasing || ((p) => p);
+    this._startTime = performance.now();
+
+    this._nextTransitionTick && cancelAnimationFrame(this._nextTransitionTick);
+
+    const tick = (time) => {
+      const p = (time - this._startTime) / duration;
+      const t = easing(Math.min(1, p));
+
+      this.currentProgress = Object.entries(this.progress).reduce((acc, [key, value]) => {
+        acc[key] = this.previousProgress[key] + (value - this.previousProgress[key]) * t;
+        return acc;
+      });
+
+      if (p < 1) {
+        this._nextTransitionTick = requestAnimationFrame(tick);
+      }
+
+      this.effect.tick(this.currentProgress);
+    };
+
+    this._nextTransitionTick = requestAnimationFrame(tick);
+
+    return this._nextTransitionTick;
+  }
+
+  /**
    * Stop the event and effect, and remove all DOM side-effects.
    */
   destroy () {
     this.pause();
     this.removeEffect();
     this._nextTick && cancelAnimationFrame(this._nextTick);
+    this._nextTransitionTick && cancelAnimationFrame(this._nextTransitionTick);
   }
 
   /**
@@ -437,6 +489,8 @@ class Pointer {
  * @property {HTMLElement} [root] element to use as hit area for pointermove events. Defaults to entire viewport.
  * @property {{width: number, height: number}} [rect] created automatically on Pointer construction.
  * @property {boolean} [noThrottle] whether to disable throttling the effect by framerate.
+ * @property {number} [transitionDuration] duration of transition effect in milliseconds.
+ * @property {function} [transitionEasing] easing function for transition effect.
  */
 
 /**
