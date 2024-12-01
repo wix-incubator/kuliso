@@ -21,7 +21,7 @@ function clamp (min, max, value) {
  * @private
  * @param {function} fn function to throttle
  * @return {(function(): number)} a function that will trigger the throttled function on next animation frame,
- * returns the requestAnimationFrame id so it can be cancelled
+ * returns the requestAnimationFrame id, so it can be cancelled
  */
 function frameThrottle (fn) {
   let throttled = false;

@@ -103,9 +103,7 @@ export class Pointer {
   transition () {
     const duration = this.config.transitionDuration;
     const easing = this.config.transitionEasing || ((p) => p);
-    this._startTime = performance.now();
-
-    this._nextTransitionTick && cancelAnimationFrame(this._nextTransitionTick);
+    const now = performance.now();
 
     const tick = (time) => {
       const p = (time - this._startTime) / duration;
@@ -114,7 +112,7 @@ export class Pointer {
       this.currentProgress = Object.entries(this.progress).reduce((acc, [key, value]) => {
         acc[key] = this.previousProgress[key] + (value - this.previousProgress[key]) * t;
         return acc;
-      });
+      }, this.currentProgress || {});
 
       if (p < 1) {
         this._nextTransitionTick = requestAnimationFrame(tick);
@@ -123,13 +121,19 @@ export class Pointer {
       this.effect.tick(this.currentProgress);
     };
 
-    this._nextTransitionTick = requestAnimationFrame(tick);
+    if (this._startTime) {
+      this._nextTransitionTick && cancelAnimationFrame(this._nextTransitionTick);
+
+      tick(now);
+    }
+
+    this._startTime = now;
 
     return this._nextTransitionTick;
   }
 
   /**
-   * Stop the event and effect, and remove all DOM side-effects.
+   * Stop the event and effect, and remove all DOM side effects.
    */
   destroy () {
     this.pause();
