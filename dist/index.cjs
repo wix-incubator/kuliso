@@ -427,6 +427,9 @@ class Pointer {
 
       if (p < 1) {
         this._nextTransitionTick = requestAnimationFrame(tick);
+      } else {
+        this.currentProgress.vx = 0;
+        this.currentProgress.vy = 0;
       }
 
       this.effect.tick(this.currentProgress);
