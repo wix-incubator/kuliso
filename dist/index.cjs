@@ -373,7 +373,7 @@ class Pointer {
     this.previousProgress = { ...this.progress };
     this.currentProgress = null;
 
-    this._measure = (event) => {
+    const _measure = (event) => {
       Object.assign(this.previousProgress, this.currentProgress || this.progress);
 
       this.progress.x = this.config.root ? event.offsetX : event.x;
@@ -382,6 +382,31 @@ class Pointer {
       this.progress.vy = event.movementY;
       this._nextTick = trigger();
     };
+
+    const dpr = window.devicePixelRatio;
+
+    if (this.config.root) {
+      this._measure = (e) => {
+        if (e.target !== this.config.root) {
+          const event = new PointerEvent('pointermove', {
+            bubbles: true,
+            cancelable: true,
+            clientX: e.x * dpr,
+            clientY: e.y * dpr,
+            movementX: e.movementX,
+            movementY: e.movementY,
+          });
+
+          e.stopPropagation();
+
+          this.config.root.dispatchEvent(event);
+        } else {
+          _measure(e);
+        }
+      };
+    } else {
+      this._measure = _measure;
+    }
   }
 
   /**

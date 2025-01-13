@@ -81,7 +81,9 @@ export class Pointer {
             bubbles: true,
             cancelable: true,
             clientX: e.x * dpr,
-            clientY: e.y * dpr
+            clientY: e.y * dpr,
+            movementX: e.movementX,
+            movementY: e.movementY,
           });
 
           e.stopPropagation();
