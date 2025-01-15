@@ -203,8 +203,8 @@ export class Pointer {
     const element = this.config.root || window;
     element.removeEventListener('pointermove', this._measure);
     if (this.config.allowActiveEvent) {
-      element.removeEventListener('pointerleave', this._mouseLeave);
-      element.removeEventListener('pointerenter', this._mouseEnter);
+      element.removeEventListener('pointerleave', this._pointerLeave);
+      element.removeEventListener('pointerenter', this._pointerEnter);
     }
   }
 
