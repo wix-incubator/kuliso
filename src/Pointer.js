@@ -72,23 +72,21 @@ export class Pointer {
       this._nextTick = trigger();
     };
 
-    const _mouseLeave = (e) => {
-      if (e.target === this.config.root) {
-      Object.assign(this.previousProgress, this.currentProgress || this.progress);
-      this.progress.active = 0;
-      this._nextTick = trigger();
-      }
-    };
-
-    const _mouseEnter = (e) => {
+    this._mouseLeave = (e) => {
       if (e.target === this.config.root) {
         Object.assign(this.previousProgress, this.currentProgress || this.progress);
-        this.progress.active = 1;
+        this.progress.active = false;
         this._nextTick = trigger();
       }
     };
-    this._mouseLeave = _mouseLeave;
-    this._mouseEnter = _mouseEnter;
+
+    this._mouseEnter = (e) => {
+      if (e.target === this.config.root) {
+        Object.assign(this.previousProgress, this.currentProgress || this.progress);
+        this.progress.active = true;
+        this._nextTick = trigger();
+      }
+    };
     const dpr = window.devicePixelRatio;
 
     if (this.config.root) {
