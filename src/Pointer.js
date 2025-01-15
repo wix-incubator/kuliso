@@ -72,7 +72,7 @@ export class Pointer {
       this._nextTick = trigger();
     };
 
-    this._mouseLeave = () => {
+    this._pointerLeave = () => {
         this.progress.active = false;
         this._nextTick = trigger();
     };
