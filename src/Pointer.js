@@ -191,8 +191,8 @@ export class Pointer {
     const element = this.config.root || window;
     element.addEventListener('pointermove', this._measure, {passive: true});
     if (this.config.allowActiveEvent) {
-      element.addEventListener('pointerleave', this._mouseLeave, {passive: true});
-      element.addEventListener('pointerenter', this._mouseEnter, {passive: true});
+      element.addEventListener('pointerleave', this._pointerLeave, {passive: true});
+      element.addEventListener('pointerenter', this._pointerEnter, {passive: true});
     }
   }
 
