@@ -17,7 +17,7 @@ import { frameThrottle } from './utilities.js';
 export class Pointer {
   constructor (config = {}) {
     this.config = { ...config };
-
+    
     this.effect = null;
     this._nextTick = null;
     this._nextTransitionTick = null;
@@ -72,6 +72,15 @@ export class Pointer {
       this._nextTick = trigger();
     };
 
+    this._pointerLeave = () => {
+        this.progress.active = false;
+        this._nextTick = trigger();
+    };
+
+    this._pointerEnter = () => {
+      this.progress.active = true;
+      this._nextTick = trigger();
+    };
     const dpr = window.devicePixelRatio;
 
     if (this.config.root) {
@@ -135,7 +144,11 @@ export class Pointer {
       const t = easing(Math.min(1, p));
 
       this.currentProgress = Object.entries(this.progress).reduce((acc, [key, value]) => {
-        acc[key] = this.previousProgress[key] + (value - this.previousProgress[key]) * t;
+        if (key === 'active') {
+          acc[key] = value;
+        } else {
+          acc[key] = this.previousProgress[key] + (value - this.previousProgress[key]) * t;
+        }
         return acc;
       }, this.currentProgress || {});
 
@@ -177,6 +190,10 @@ export class Pointer {
     this.removeEvent();
     const element = this.config.root || window;
     element.addEventListener('pointermove', this._measure, {passive: true});
+    if (this.config.allowActiveEvent) {
+      element.addEventListener('pointerleave', this._pointerLeave, {passive: true});
+      element.addEventListener('pointerenter', this._pointerEnter, {passive: true});
+    }
   }
 
   /**
@@ -185,6 +202,10 @@ export class Pointer {
   removeEvent () {
     const element = this.config.root || window;
     element.removeEventListener('pointermove', this._measure);
+    if (this.config.allowActiveEvent) {
+      element.removeEventListener('pointerleave', this._pointerLeave);
+      element.removeEventListener('pointerenter', this._pointerEnter);
+    }
   }
 
   /**
