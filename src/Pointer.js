@@ -72,6 +72,23 @@ export class Pointer {
       this._nextTick = trigger();
     };
 
+    const _mouseLeave = (e) => {
+      if (e.target === this.config.root) {
+      Object.assign(this.previousProgress, this.currentProgress || this.progress);
+      this.progress.active = 0;
+      this._nextTick = trigger();
+      }
+    };
+
+    const _mouseEnter = (e) => {
+      if (e.target === this.config.root) {
+        Object.assign(this.previousProgress, this.currentProgress || this.progress);
+        this.progress.active = 1;
+        this._nextTick = trigger();
+      }
+    };
+    this._mouseLeave = _mouseLeave;
+    this._mouseEnter = _mouseEnter;
     const dpr = window.devicePixelRatio;
 
     if (this.config.root) {
@@ -175,6 +192,10 @@ export class Pointer {
     this.removeEvent();
     const element = this.config.root || window;
     element.addEventListener('pointermove', this._measure, {passive: true});
+    if (this.config.scenes[0].allowActiveEvent) {
+      element.addEventListener('pointerleave', this._mouseLeave, {passive: true});
+      element.addEventListener('pointerenter', this._mouseEnter, {passive: true});
+    }
   }
 
   /**
@@ -183,6 +204,10 @@ export class Pointer {
   removeEvent () {
     const element = this.config.root || window;
     element.removeEventListener('pointermove', this._measure);
+    if (this.config.scenes[0].allowActiveEvent) {
+      element.removeEventListener('pointerleave', this._mouseLeave);
+      element.removeEventListener('pointerenter', this._mouseEnter);
+    }
   }
 
   /**

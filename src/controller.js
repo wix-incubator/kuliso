@@ -133,7 +133,7 @@ export function getController (config) {
         const velocity = {x: progress.vx, y: progress.vy};
 
         // run effect
-        scene.effect(scene, {x, y}, velocity);
+        scene.effect(scene, {x, y}, velocity, progress.active);
       }
     }
 
