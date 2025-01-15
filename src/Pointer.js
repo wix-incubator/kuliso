@@ -148,7 +148,11 @@ export class Pointer {
       const t = easing(Math.min(1, p));
 
       this.currentProgress = Object.entries(this.progress).reduce((acc, [key, value]) => {
-        acc[key] = this.previousProgress[key] + (value - this.previousProgress[key]) * t;
+        if (key === 'active') {
+          acc[key] = value;
+        } else {
+          acc[key] = this.previousProgress[key] + (value - this.previousProgress[key]) * t;
+        }
         return acc;
       }, this.currentProgress || {});
 
