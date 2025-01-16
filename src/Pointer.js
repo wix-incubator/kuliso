@@ -17,7 +17,7 @@ import { frameThrottle } from './utilities.js';
 export class Pointer {
   constructor (config = {}) {
     this.config = { ...config };
-    
+
     this.effect = null;
     this._nextTick = null;
     this._nextTransitionTick = null;
@@ -190,9 +190,19 @@ export class Pointer {
     this.removeEvent();
     const element = this.config.root || window;
     element.addEventListener('pointermove', this._measure, {passive: true});
+
+    if (this.config.eventSource) {
+      this.config.eventSource.addEventListener('pointermove', this._measure, {passive: true});
+    }
+
     if (this.config.allowActiveEvent) {
       element.addEventListener('pointerleave', this._pointerLeave, {passive: true});
       element.addEventListener('pointerenter', this._pointerEnter, {passive: true});
+
+      if (this.config.eventSource) {
+        this.config.eventSource.addEventListener('pointerleave', this._pointerLeave, {passive: true});
+        this.config.eventSource.addEventListener('pointerenter', this._pointerEnter, {passive: true});
+      }
     }
   }
 
@@ -202,9 +212,19 @@ export class Pointer {
   removeEvent () {
     const element = this.config.root || window;
     element.removeEventListener('pointermove', this._measure);
+
+    if (this.config.eventSource) {
+      this.config.eventSource.removeEventListener('pointermove', this._measure, {capture: true});
+    }
+
     if (this.config.allowActiveEvent) {
       element.removeEventListener('pointerleave', this._pointerLeave);
       element.removeEventListener('pointerenter', this._pointerEnter);
+
+      if (this.config.eventSource) {
+        this.config.eventSource.removeEventListener('pointerleave', this._pointerLeave);
+        this.config.eventSource.removeEventListener('pointerenter', this._pointerEnter);
+      }
     }
   }
 
@@ -233,6 +253,8 @@ export class Pointer {
  * @property {boolean} [noThrottle] whether to disable throttling the effect by framerate.
  * @property {number} [transitionDuration] duration of transition effect in milliseconds.
  * @property {function} [transitionEasing] easing function for transition effect.
+ * @property {boolean} [allowActiveEvent] whether to track timeline activation events.
+ * @property {HTMLElement} [eventSource] an alternative source element to attach event handlers and retarget to root.
  */
 
 /**
