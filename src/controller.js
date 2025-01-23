@@ -127,8 +127,16 @@ export function getController (config) {
     for (let scene of config.scenes) {
       if (!scene.disabled) {
         // get scene's progress
-        const x = +clamp(0, 1, scene.transform?.x(progress.x) || progress.x / config.rect.width).toPrecision(4);
-        const y = +clamp(0, 1, scene.transform?.y(progress.y) || progress.y / config.rect.height).toPrecision(4);
+        const normalizedX = scene.transform?.x(progress.x) || progress.x / config.rect.width;
+        const normalizedY = scene.transform?.y(progress.y) || progress.y / config.rect.height;
+
+        if (config.allowActiveEvent && (normalizedX > 1 || normalizedY > 1 || normalizedX < 0 || normalizedY < 0)) {
+          scene.effect(scene, {x: 0, y: 0}, {x: 0, y: 0}, false);
+          return;
+        }
+
+        const x = +clamp(0, 1, normalizedX).toPrecision(4);
+        const y = +clamp(0, 1, normalizedY).toPrecision(4);
 
         const velocity = {x: progress.vx, y: progress.vy};
 
