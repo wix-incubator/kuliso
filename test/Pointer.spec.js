@@ -27,6 +27,15 @@ class ResizeObserver {
     }
 }
 
+class PointerEvent {
+    constructor (type, options) {
+        this.type = type;
+        Object.assign(this, options);
+        this.offsetX = options.clientX || 0;
+        this.offsetY = options.clientY || 0;
+    }
+}
+
 function generateElement ({width, height}) {
     return {
         offsetWidth: width,
@@ -38,6 +47,7 @@ function generateElement ({width, height}) {
 
 test.beforeEach(() => {
     let resizeHandler, scrollHandler;
+    const bodyEvents = {};
 
     global.setTimeout = function (fn) { fn(); };
     global.window = {
@@ -73,10 +83,19 @@ test.beforeEach(() => {
                 scrollHandler = handler;
             }
         },
-        removeEventListener () {}
+        removeEventListener () {},
+        body: {
+            addEventListener (type, handler) {
+                bodyEvents[type] = handler;
+            },
+            dispatchEvent(event) {
+                bodyEvents[event.type]?.(event);
+            }
+        }
     };
     global.ResizeObserver = ResizeObserver;
     global.requestAnimationFrame = function () {};
+    global.PointerEvent = PointerEvent;
 });
 
 test.afterEach(() => {
