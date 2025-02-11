@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kuliso | Tiny library for performant pointer-driven effects</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    main {
+      display: flex;
+      position: relative;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+    }
+
+    section {
+      width: 80%;
+      height: 80%;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgb(0 0 0 / 10%);
+    }
+
+    #target {
+      box-sizing: border-box;
+      width: 40px;
+      margin: -20px 0 0 -20px;
+      aspect-ratio: 1;
+      border: 10px solid #007bff;
+      border-radius: 50%;
+      box-shadow:
+        0 0 6px rgb(0 0 0 / 50%),
+        inset 0 0 4px rgb(0 0 0 / 50%);
+      pointer-events: none;
+    }
+
+    #cover {
+      position: absolute;
+      top: 0;
+      left: 25%;
+      width: 50%;
+      height: 100%;
+      background-color: rgba(0, 123, 255, 0.1);
+    }
+
+    aside {
+      position: fixed;
+      top: 0;
+      right: 0;
+      padding: 10px;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgb(0 0 0 / 10%);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <aside>
+      <pre id="x"></pre>
+      <pre id="y"></pre>
+      <pre id="vx"></pre> <pre id="vxmax"></pre>
+      <pre id="vy"></pre> <pre id="vymax"></pre>
+    </aside>
+    <section id="root">
+      <div id="target"></div>
+      <div id="cover"></div>
+    </section>
+  </main>
+  <script type="module">
+    import { Pointer } from './index.js';
+
+    const root = document.getElementById('root');
+    const target = document.getElementById('target');
+
+    const x = document.getElementById('x');
+    const y = document.getElementById('y');
+    const vx = document.getElementById('vx');
+    const vxmax = document.getElementById('vxmax');
+    const vy = document.getElementById('vy');
+    const vymax = document.getElementById('vymax');
+
+    let vxmaxValue = 0;
+    let vymaxValue = 0;
+
+    function log (p, v) {
+      x.innerText = `X: ${p.x}`;
+      y.innerText = `Y: ${p.y}`;
+      vx.innerText = `Vx: ${v.x}`;
+      vy.innerText = `Vy: ${v.y}`;
+      vxmaxValue = Math.max(vxmaxValue, v.x);
+      vymaxValue = Math.max(vymaxValue, v.y);
+      vxmax.innerText = `Vx Max: ${vxmaxValue}`;
+      vymax.innerText = `Vy Max: ${vymaxValue}`;
+    }
+
+    const WIDTH = root.clientWidth;
+    const HEIGHT = root.clientHeight;
+    const pointer = new Pointer({
+      root,
+      scenes: [{
+        target,
+        // centeredToTarget: true,
+        effect: (scene, p, v) => {
+          log(p, v);
+          target.style.transform = `translate(${p.x * WIDTH}px, ${p.y * HEIGHT}px)`;
+        }
+      }]
+    });
+
+    pointer.start();
+  </script>
+</body>
+</html>
