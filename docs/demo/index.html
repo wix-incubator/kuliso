@@ -29,6 +29,7 @@
       box-sizing: border-box;
       width: 40px;
       margin: -20px 0 0 -20px;
+      /*margin: calc(25% - 20px) 0 0 calc(50% - 20px);*/
       aspect-ratio: 1;
       border: 10px solid #007bff;
       border-radius: 50%;
@@ -36,6 +37,7 @@
         0 0 6px rgb(0 0 0 / 50%),
         inset 0 0 4px rgb(0 0 0 / 50%);
       pointer-events: none;
+      /*transition: transform 1s linear;*/
     }
 
     #cover {
@@ -103,10 +105,10 @@
       root,
       scenes: [{
         target,
-        // centeredToTarget: true,
         effect: (scene, p, v) => {
           log(p, v);
           target.style.transform = `translate(${p.x * WIDTH}px, ${p.y * HEIGHT}px)`;
+          // target.style.transform = `translate(${v.x * 5}px, ${v.y * 5}px)`;
         }
       }],
       transitionDuration: 1000,
