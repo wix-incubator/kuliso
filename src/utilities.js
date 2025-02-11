@@ -66,8 +66,34 @@ function getRect (element) {
   };
 }
 
+/**
+ * @see https://issues.chromium.org/issues/40887601?pli=1
+ */
+function testPointerOffsetDprBug () {
+  const DPR = window.devicePixelRatio;
+  let fixRequired = false;
+
+  if (DPR === 1) {
+    // we can immediately return here, not required to fix
+    return false;
+  }
+
+  document.body.addEventListener('pointerdown', (e) => {
+    fixRequired = e.offsetX !== 10;
+  }, { once: true });
+
+  const event = new PointerEvent('pointerdown', {
+    clientX: 10
+  });
+
+  document.body.dispatchEvent(event);
+
+  return fixRequired;
+}
+
 export {
   getRect,
   clamp,
-  frameThrottle
+  frameThrottle,
+  testPointerOffsetDprBug
 };

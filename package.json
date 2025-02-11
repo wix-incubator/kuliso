@@ -1,6 +1,6 @@
 {
   "name": "kuliso",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "sideeffects": true,
   "description": "Tiny library for performant pointer-driven or gyroscope-driven effects",
   "main": "dist/index.cjs",
@@ -12,7 +12,8 @@
     "test": "c8 ava test/*.spec.js -s",
     "test:debug": "ava test/*.spec.js -s",
     "docs": "documentation build src/index.js -f html -o docs/reference -c documentation.yml",
-    "rtfm": "npm run docs && http-server ./docs/reference"
+    "rtfm": "npm run docs && http-server ./docs/reference",
+    "demo": "cd docs/demo && rollup -c && cd -"
   },
   "repository": {
     "type": "git",

@@ -1,5 +1,5 @@
 import { getController } from './controller.js';
-import { frameThrottle } from './utilities.js';
+import { frameThrottle, testPointerOffsetDprBug } from './utilities.js';
 
 /**
  * @class Pointer
@@ -62,13 +62,16 @@ export class Pointer {
     this.previousProgress = { ...this.progress };
     this.currentProgress = null;
 
+    const shouldFixSynthPointer = testPointerOffsetDprBug();
+    const DPR = shouldFixSynthPointer ? window.devicePixelRatio : 1;
+
     const _measure = (event) => {
       Object.assign(this.previousProgress, this.currentProgress || this.progress);
 
       this.progress.x = this.config.root ? event.offsetX : event.x;
       this.progress.y = this.config.root ? event.offsetY : event.y;
-      this.progress.vx = event.movementX;
-      this.progress.vy = event.movementY;
+      this.progress.vx = event.movementX * DPR;
+      this.progress.vy = event.movementY * DPR;
       this._nextTick = trigger();
     };
 
@@ -81,7 +84,6 @@ export class Pointer {
       this.progress.active = true;
       this._nextTick = trigger();
     };
-    const dpr = window.devicePixelRatio;
 
     if (this.config.root) {
       this._measure = (e) => {
@@ -89,10 +91,8 @@ export class Pointer {
           const event = new PointerEvent('pointermove', {
             bubbles: true,
             cancelable: true,
-            clientX: e.x * dpr,
-            clientY: e.y * dpr,
-            movementX: e.movementX,
-            movementY: e.movementY,
+            clientX: e.x * DPR,
+            clientY: e.y * DPR,
           });
 
           e.stopPropagation();

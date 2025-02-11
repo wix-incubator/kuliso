@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * Clamps a value between limits.
  *
@@ -831,5 +829,4 @@ class Gyro {
  * @param {{x: number, y: number}} velocity
  */
 
-exports.Gyro = Gyro;
-exports.Pointer = Pointer;
+export { Gyro, Pointer };
