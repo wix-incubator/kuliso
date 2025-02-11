@@ -66,12 +66,10 @@ export class Pointer {
     const DPR = shouldFixSynthPointer ? window.devicePixelRatio : 1;
 
     const _measure = (event) => {
-      Object.assign(this.previousProgress, this.currentProgress || this.progress);
-
       this.progress.x = this.config.root ? event.offsetX : event.x;
       this.progress.y = this.config.root ? event.offsetY : event.y;
-      this.progress.vx = event.movementX * DPR;
-      this.progress.vy = event.movementY * DPR;
+      this.progress.vx = event.movementX;
+      this.progress.vy = event.movementY;
       this._nextTick = trigger();
     };
 
@@ -93,6 +91,8 @@ export class Pointer {
             cancelable: true,
             clientX: e.x * DPR,
             clientY: e.y * DPR,
+            movementX: e.movementX * DPR,
+            movementY: e.movementY * DPR,
           });
 
           e.stopPropagation();
@@ -165,10 +165,14 @@ export class Pointer {
     if (this._startTime) {
       this._nextTransitionTick && cancelAnimationFrame(this._nextTransitionTick);
 
-      tick(now);
-    }
+      Object.assign(this.previousProgress, this.currentProgress);
 
-    this._startTime = now;
+      this._startTime = now;
+
+      tick(now);
+    } else {
+      this._startTime = now;
+    }
 
     return this._nextTransitionTick;
   }
