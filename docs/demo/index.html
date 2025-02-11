@@ -108,7 +108,9 @@
           log(p, v);
           target.style.transform = `translate(${p.x * WIDTH}px, ${p.y * HEIGHT}px)`;
         }
-      }]
+      }],
+      transitionDuration: 1000,
+      transitionEasing: (t) => 1 - (1 - t) ** 2, // quadOut
     });
 
     pointer.start();
