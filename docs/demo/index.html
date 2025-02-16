@@ -28,8 +28,8 @@
     #target {
       box-sizing: border-box;
       width: 40px;
-      margin: -20px 0 0 -20px;
-      /*margin: calc(25% - 20px) 0 0 calc(50% - 20px);*/
+      /*margin: -20px 0 0 -20px;*/
+      margin: calc(25% - 20px) 0 0 calc(50% - 20px);
       aspect-ratio: 1;
       border: 10px solid #007bff;
       border-radius: 50%;
@@ -37,7 +37,7 @@
         0 0 6px rgb(0 0 0 / 50%),
         inset 0 0 4px rgb(0 0 0 / 50%);
       pointer-events: none;
-      /*transition: transform 1s linear;*/
+      /*transition: transform 0.5s linear;*/
     }
 
     #cover {
@@ -66,6 +66,7 @@
       <pre id="y"></pre>
       <pre id="vx"></pre> <pre id="vxmax"></pre>
       <pre id="vy"></pre> <pre id="vymax"></pre>
+      <pre id="active"></pre>
     </aside>
     <section id="root">
       <div id="target"></div>
@@ -84,11 +85,12 @@
     const vxmax = document.getElementById('vxmax');
     const vy = document.getElementById('vy');
     const vymax = document.getElementById('vymax');
+    const active = document.getElementById('active');
 
     let vxmaxValue = 0;
     let vymaxValue = 0;
 
-    function log (p, v) {
+    function log (p, v, isActive) {
       x.innerText = `X: ${p.x}`;
       y.innerText = `Y: ${p.y}`;
       vx.innerText = `Vx: ${v.x}`;
@@ -97,21 +99,24 @@
       vymaxValue = Math.max(vymaxValue, v.y);
       vxmax.innerText = `Vx Max: ${vxmaxValue}`;
       vymax.innerText = `Vy Max: ${vymaxValue}`;
+      active.innerText = `Active: ${isActive}`;
     }
 
     const WIDTH = root.clientWidth;
     const HEIGHT = root.clientHeight;
     const pointer = new Pointer({
       root,
+      allowActiveEvent: true,
       scenes: [{
         target,
-        effect: (scene, p, v) => {
-          log(p, v);
-          target.style.transform = `translate(${p.x * WIDTH}px, ${p.y * HEIGHT}px)`;
-          // target.style.transform = `translate(${v.x * 5}px, ${v.y * 5}px)`;
+        effect: (scene, p, v, isActive) => {
+          log(p, v, isActive);
+          // target.style.transform = `translate(${p.x * WIDTH}px, ${p.y * HEIGHT}px)`;
+          target.style.transform = `translate(${v.x * 5}px, ${v.y * 5}px)`;
         }
       }],
-      transitionDuration: 1000,
+      // noThrottle: true,
+      transitionDuration: 500,
       transitionEasing: (t) => 1 - (1 - t) ** 2, // quadOut
     });
 
