@@ -1,6 +1,8 @@
 import { getController } from './controller.js';
 import { frameThrottle, testPointerOffsetDprBug } from './utilities.js';
 
+const MOVEMENT_RESET_DELAY = 1e3 / 60 * 3; // == 50 (3 frames in 60fps)
+
 /**
  * @class Pointer
  * @param {PointerConfig} config
@@ -66,15 +68,19 @@ export class Pointer {
     const DPR = shouldFixSynthPointer ? window.devicePixelRatio : 1;
 
     const _measure = (event) => {
-      this.progress.x = this.config.root ? event.offsetX : event.x;
-      this.progress.y = this.config.root ? event.offsetY : event.y;
-      this.progress.vx = event.movementX;
-      this.progress.vy = event.movementY;
+      const newX = this.config.root ? event.offsetX : event.x;
+      const newY = this.config.root ? event.offsetY : event.y;
+      this.progress.vx = newX - this.progress.x;
+      this.progress.vy = newY - this.progress.y;
+      this.progress.x = newX;
+      this.progress.y = newY;
       this._nextTick = trigger();
     };
 
     this._pointerLeave = () => {
         this.progress.active = false;
+        this.progress.vx = 0;
+        this.progress.vy = 0;
         this._nextTick = trigger();
     };
 
@@ -91,8 +97,6 @@ export class Pointer {
             cancelable: true,
             clientX: e.x * DPR,
             clientY: e.y * DPR,
-            movementX: e.movementX * DPR,
-            movementY: e.movementY * DPR,
           });
 
           e.stopPropagation();
@@ -138,10 +142,17 @@ export class Pointer {
     const duration = this.config.transitionDuration;
     const easing = this.config.transitionEasing || ((p) => p);
     const now = performance.now();
+    let resetMovement = false;
 
     const tick = (time) => {
       const p = (time - this._startTime) / duration;
       const t = easing(Math.min(1, p));
+
+      if (resetMovement) {
+        this.progress.vx = 0;
+        this.progress.vy = 0;
+        resetMovement = false;
+      }
 
       this.currentProgress = Object.entries(this.progress).reduce((acc, [key, value]) => {
         if (key === 'active') {
@@ -154,9 +165,9 @@ export class Pointer {
 
       if (p < 1) {
         this._nextTransitionTick = requestAnimationFrame(tick);
-      } else {
-        this.currentProgress.vx = 0;
-        this.currentProgress.vy = 0;
+
+        // reset movement on next frame
+        resetMovement = time - this._startTime > MOVEMENT_RESET_DELAY;
       }
 
       this.effect.tick(this.currentProgress);
