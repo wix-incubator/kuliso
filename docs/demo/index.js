@@ -91,6 +91,56 @@ function testPointerOffsetDprBug () {
   return fixRequired;
 }
 
+function testPointerOffsetScrollBug () {
+  return new Promise((resolve) => {
+    function scrollHandler () {
+      if (window.scrollY > 0) {
+        window.removeEventListener('scroll', scrollHandler);
+
+        let fixRequired = false;
+
+        document.body.addEventListener('pointerdown', (e) => {
+          fixRequired = e.clientY === e.pageY;
+        }, { once: true });
+
+        const event = new PointerEvent('pointerdown', {
+          clientX: 10
+        });
+
+        document.body.dispatchEvent(event);
+
+        resolve(fixRequired);
+      }
+    }
+
+    if (window.scrollY > 0) {
+      scrollHandler();
+    }
+
+    window.addEventListener('scroll', scrollHandler);
+  });
+}
+
+/**
+ * @see https://bugs.webkit.org/show_bug.cgi?id=287799
+ */
+function getScrollOffsetsForWebKitPointerBug () {
+  function scrollHandler () {
+    scrollOffsets.x = window.scrollX;
+    scrollOffsets.y = window.scrollY;
+  }
+
+  const scrollOffsets = { x: 0, y: 0, scrollHandler };
+
+  testPointerOffsetScrollBug().then((fixRequired) => {
+    if (fixRequired) {
+      window.addEventListener('scroll', scrollHandler);
+    }
+  });
+
+  return scrollOffsets;
+}
+
 let listeners = 0;
 const pointers = new Set();
 
@@ -342,7 +392,7 @@ function getController$1 (config) {
   };
 }
 
-const MOVEMENT_RESET_DELAY = 1e3 / 60 * 3; // 3 frames
+const MOVEMENT_RESET_DELAY = 1e3 / 60 * 3; // == 50 (3 frames in 60fps)
 
 /**
  * @class Pointer
@@ -405,9 +455,6 @@ class Pointer {
     this.previousProgress = { ...this.progress };
     this.currentProgress = null;
 
-    const shouldFixSynthPointer = testPointerOffsetDprBug();
-    const DPR = shouldFixSynthPointer ? window.devicePixelRatio : 1;
-
     const _measure = (event) => {
       const newX = this.config.root ? event.offsetX : event.x;
       const newY = this.config.root ? event.offsetY : event.y;
@@ -431,13 +478,18 @@ class Pointer {
     };
 
     if (this.config.root) {
+      const shouldFixSynthPointer = testPointerOffsetDprBug();
+      const DPR = shouldFixSynthPointer ? window.devicePixelRatio : 1;
+
+      const scrollOffset = getScrollOffsetsForWebKitPointerBug();
+
       this._measure = (e) => {
         if (e.target !== this.config.root) {
           const event = new PointerEvent('pointermove', {
             bubbles: true,
             cancelable: true,
-            clientX: e.x * DPR,
-            clientY: e.y * DPR,
+            clientX: e.x * DPR + scrollOffset.x,
+            clientY: e.y * DPR + scrollOffset.y,
           });
 
           e.stopPropagation();

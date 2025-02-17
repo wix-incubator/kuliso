@@ -7,6 +7,7 @@
     body {
       margin: 0;
       padding: 0;
+      height: 200vh;
     }
 
     main {
@@ -28,8 +29,8 @@
     #target {
       box-sizing: border-box;
       width: 40px;
-      /*margin: -20px 0 0 -20px;*/
-      margin: calc(25% - 20px) 0 0 calc(50% - 20px);
+      margin: -20px 0 0 -20px;
+      /*margin: calc(25% - 20px) 0 0 calc(50% - 20px);*/
       aspect-ratio: 1;
       border: 10px solid #007bff;
       border-radius: 50%;
@@ -111,8 +112,8 @@
         target,
         effect: (scene, p, v, isActive) => {
           log(p, v, isActive);
-          // target.style.transform = `translate(${p.x * WIDTH}px, ${p.y * HEIGHT}px)`;
-          target.style.transform = `translate(${v.x * 5}px, ${v.y * 5}px)`;
+          target.style.transform = `translate(${p.x * WIDTH}px, ${p.y * HEIGHT}px)`;
+          // target.style.transform = `translate(${v.x * 5}px, ${v.y * 5}px)`;
         }
       }],
       // noThrottle: true,
