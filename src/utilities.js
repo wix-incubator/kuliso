@@ -91,9 +91,60 @@ function testPointerOffsetDprBug () {
   return fixRequired;
 }
 
+function testPointerOffsetScrollBug () {
+  return new Promise((resolve) => {
+    function scrollHandler () {
+      if (window.scrollY > 0) {
+        window.removeEventListener('scroll', scrollHandler);
+
+        let fixRequired = false;
+
+        document.body.addEventListener('pointerdown', (e) => {
+          fixRequired = e.clientY === e.pageY;
+        }, { once: true });
+
+        const event = new PointerEvent('pointerdown', {
+          clientX: 10
+        });
+
+        document.body.dispatchEvent(event);
+
+        resolve(fixRequired);
+      }
+    }
+
+    if (window.scrollY > 0) {
+      scrollHandler();
+    }
+
+    window.addEventListener('scroll', scrollHandler);
+  });
+}
+
+/**
+ * @see https://bugs.webkit.org/show_bug.cgi?id=287799
+ */
+function getScrollOffsetsForWebKitPointerBug () {
+  function scrollHandler () {
+    scrollOffsets.x = window.scrollX;
+    scrollOffsets.y = window.scrollY;
+  }
+
+  const scrollOffsets = { x: 0, y: 0, scrollHandler };
+
+  testPointerOffsetScrollBug().then((fixRequired) => {
+    if (fixRequired) {
+      window.addEventListener('scroll', scrollHandler);
+    }
+  });
+
+  return scrollOffsets;
+}
+
 export {
   getRect,
   clamp,
   frameThrottle,
-  testPointerOffsetDprBug
+  testPointerOffsetDprBug,
+  getScrollOffsetsForWebKitPointerBug
 };
