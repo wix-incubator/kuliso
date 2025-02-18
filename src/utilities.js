@@ -93,29 +93,36 @@ function testPointerOffsetDprBug () {
 
 function testPointerOffsetScrollBug () {
   return new Promise((resolve) => {
+    const startY = window.scrollY;
+    let fixRequired = false;
+    let currentY;
+
+    function sampleOffsetY () {
+      document.body.addEventListener('pointerdown', (e) => {
+        if (currentY === undefined) {
+          currentY = e.offsetY;
+        } else {
+          // when dispatching on BODY in different scroll it gives the same offsetY value only on WebKit
+          fixRequired = e.offsetY === currentY;
+        }
+      }, { once: true });
+
+      const event = new PointerEvent('pointerdown', {
+        clientY: 500
+      });
+
+      document.body.dispatchEvent(event);
+    }
+
     function scrollHandler () {
-      if (window.scrollY > 0) {
+      if (window.scrollY !== startY) {
         window.removeEventListener('scroll', scrollHandler);
-
-        let fixRequired = false;
-
-        document.body.addEventListener('pointerdown', (e) => {
-          fixRequired = e.clientY === e.pageY;
-        }, { once: true });
-
-        const event = new PointerEvent('pointerdown', {
-          clientX: 10
-        });
-
-        document.body.dispatchEvent(event);
-
+        sampleOffsetY();
         resolve(fixRequired);
       }
     }
 
-    if (window.scrollY > 0) {
-      scrollHandler();
-    }
+    sampleOffsetY();
 
     window.addEventListener('scroll', scrollHandler);
   });
