@@ -629,7 +629,7 @@ class Pointer {
     element.removeEventListener('pointermove', this._measure);
 
     if (this.config.eventSource) {
-      this.config.eventSource.removeEventListener('pointermove', this._measure, {capture: true});
+      this.config.eventSource.removeEventListener('pointermove', this._measure);
     }
 
     if (this.config.allowActiveEvent) {
