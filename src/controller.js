@@ -135,8 +135,8 @@ export function getController (config) {
 
         const velocity = {x: progress.vx, y: progress.vy};
 
-        if (config.allowActiveEvent && (normalizedX > 1 || normalizedY > 1 || normalizedX < 0 || normalizedY < 0)) {
-          progress.active = false;
+        if (config.allowActiveEvent) {
+          progress.active = (normalizedX <= 1 && normalizedY <= 1 && normalizedX >= 0 && normalizedY >= 0);
         }
 
         // run effect
