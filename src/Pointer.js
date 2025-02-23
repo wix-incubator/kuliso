@@ -1,7 +1,14 @@
 import { getController } from './controller.js';
-import { frameThrottle, testPointerOffsetDprBug, getScrollOffsetsForWebKitPointerBug } from './utilities.js';
+import { frameThrottle, testPointerOffsetDprBug, testScrollOffsetsForWebKitPointerBug } from './utilities.js';
 
 const MOVEMENT_RESET_DELAY = 1e3 / 60 * 3; // == 50 (3 frames in 60fps)
+let shouldFixSynthPointer;
+
+function scrollHandler () {
+  scrollOffsets.x = window.scrollX;
+  scrollOffsets.y = window.scrollY;
+}
+const scrollOffsets = { x: 0, y: 0, scrollHandler, fixRequired: undefined };
 
 /**
  * @class Pointer
@@ -87,10 +94,12 @@ export class Pointer {
     };
 
     if (this.config.root) {
-      const shouldFixSynthPointer = testPointerOffsetDprBug();
+      shouldFixSynthPointer = typeof shouldFixSynthPointer === 'boolean' ? shouldFixSynthPointer : testPointerOffsetDprBug();
       const DPR = shouldFixSynthPointer ? window.devicePixelRatio : 1;
 
-      const scrollOffset = getScrollOffsetsForWebKitPointerBug();
+      if (typeof scrollOffsets.fixRequired === 'undefined') {
+        testScrollOffsetsForWebKitPointerBug(scrollOffsets);
+      }
 
       this._measure = (e) => {
         if (e.target !== this.config.root) {
