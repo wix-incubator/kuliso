@@ -125,23 +125,22 @@ function testPointerOffsetScrollBug () {
     sampleOffsetY();
 
     window.addEventListener('scroll', scrollHandler);
+
+    if (window.scrollY > 0) {
+      window.scrollBy(0, -1);
+    }
   });
 }
 
 /**
  * @see https://bugs.webkit.org/show_bug.cgi?id=287799
  */
-function getScrollOffsetsForWebKitPointerBug () {
-  function scrollHandler () {
-    scrollOffsets.x = window.scrollX;
-    scrollOffsets.y = window.scrollY;
-  }
-
-  const scrollOffsets = { x: 0, y: 0, scrollHandler };
-
+function testScrollOffsetsForWebKitPointerBug (scrollOffsets) {
   testPointerOffsetScrollBug().then((fixRequired) => {
+    scrollOffsets.fixRequired = fixRequired;
+
     if (fixRequired) {
-      window.addEventListener('scroll', scrollHandler);
+      window.addEventListener('scroll', scrollOffsets.scrollHandler);
     }
   });
 
@@ -400,6 +399,13 @@ function getController$1 (config) {
 }
 
 const MOVEMENT_RESET_DELAY = 1e3 / 60 * 3; // == 50 (3 frames in 60fps)
+let shouldFixSynthPointer;
+
+function scrollHandler () {
+  scrollOffsets.x = window.scrollX;
+  scrollOffsets.y = window.scrollY;
+}
+const scrollOffsets = { x: 0, y: 0, scrollHandler, fixRequired: undefined };
 
 /**
  * @class Pointer
@@ -485,10 +491,12 @@ class Pointer {
     };
 
     if (this.config.root) {
-      const shouldFixSynthPointer = testPointerOffsetDprBug();
+      shouldFixSynthPointer = typeof shouldFixSynthPointer === 'boolean' ? shouldFixSynthPointer : testPointerOffsetDprBug();
       const DPR = shouldFixSynthPointer ? window.devicePixelRatio : 1;
 
-      const scrollOffset = getScrollOffsetsForWebKitPointerBug();
+      if (typeof scrollOffsets.fixRequired === 'undefined') {
+        testScrollOffsetsForWebKitPointerBug(scrollOffsets);
+      }
 
       this._measure = (e) => {
         if (e.target !== this.config.root) {
