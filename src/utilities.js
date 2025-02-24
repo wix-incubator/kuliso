@@ -143,8 +143,6 @@ function testScrollOffsetsForWebKitPointerBug (scrollOffsets) {
       window.addEventListener('scroll', scrollOffsets.scrollHandler);
     }
   });
-
-  return scrollOffsets;
 }
 
 export {

@@ -106,8 +106,8 @@ export class Pointer {
           const event = new PointerEvent('pointermove', {
             bubbles: true,
             cancelable: true,
-            clientX: e.x * DPR + scrollOffset.x,
-            clientY: e.y * DPR + scrollOffset.y,
+            clientX: e.x * DPR + scrollOffsets.x,
+            clientY: e.y * DPR + scrollOffsets.y,
           });
 
           e.stopPropagation();
