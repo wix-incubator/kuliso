@@ -143,6 +143,7 @@ function testScrollOffsetsForWebKitPointerBug (scrollOffsets) {
 
     if (fixRequired) {
       window.addEventListener('scroll', scrollOffsets.scrollHandler);
+      scrollOffsets.scrollHandler();
     }
   });
 }

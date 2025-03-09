@@ -68,6 +68,7 @@
       <pre id="vx"></pre> <pre id="vxmax"></pre>
       <pre id="vy"></pre> <pre id="vymax"></pre>
       <pre id="active"></pre>
+      <button id="starter">Start</button>
     </aside>
     <section id="root">
       <div id="target"></div>
@@ -88,6 +89,8 @@
     const vymax = document.getElementById('vymax');
     const active = document.getElementById('active');
 
+    document.getElementById('starter').addEventListener('click', init);
+
     let vxmaxValue = 0;
     let vymaxValue = 0;
 
@@ -105,23 +108,33 @@
 
     const WIDTH = root.clientWidth;
     const HEIGHT = root.clientHeight;
-    const pointer = new Pointer({
-      root,
-      allowActiveEvent: true,
-      scenes: [{
-        target,
-        effect: (scene, p, v, isActive) => {
-          log(p, v, isActive);
-          target.style.transform = `translate(${p.x * WIDTH}px, ${p.y * HEIGHT}px)`;
-          // target.style.transform = `translate(${v.x * 5}px, ${v.y * 5}px)`;
-        }
-      }],
-      // noThrottle: true,
-      transitionDuration: 500,
-      transitionEasing: (t) => 1 - (1 - t) ** 2, // quadOut
-    });
+    let pointer;
 
-    pointer.start();
+    function init () {
+      if (pointer) {
+        pointer.destroy();
+      }
+
+      pointer = new Pointer({
+        root,
+        allowActiveEvent: true,
+        scenes: [{
+          target,
+          effect: (scene, p, v, isActive) => {
+            log(p, v, isActive);
+            target.style.transform = `translate(${p.x * WIDTH}px, ${p.y * HEIGHT}px)`;
+            // target.style.transform = `translate(${v.x * 5}px, ${v.y * 5}px)`;
+          }
+        }],
+        // noThrottle: true,
+        transitionDuration: 500,
+        transitionEasing: (t) => 1 - (1 - t) ** 2, // quadOut
+      });
+
+      pointer.start();
+    }
+
+    // init();
   </script>
 </body>
 </html>
